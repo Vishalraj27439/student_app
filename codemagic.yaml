@@ -8,17 +8,12 @@ workflows:
       - name: Install dependencies
         script: flutter pub get
 
-      - name: Build APK for Android
+      - name: Build Android APK
         script: flutter build apk --release
 
-      - name: Build iOS .ipa (if signing files are added)
+      - name: Build iOS IPA
         script: flutter build ipa --release
 
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
       - build/ios/ipa/*.ipa
-
-    publishing:
-      email:
-        recipients:
-          - visuraj27439@gmail.com
