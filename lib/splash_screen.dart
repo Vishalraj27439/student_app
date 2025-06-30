@@ -18,21 +18,20 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> checkLoginStatus() async {
-    await Future.delayed(const Duration(seconds: 2)); // optional splash delay
+    await Future.delayed(const Duration(seconds: 2)); // for splash
+
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
     if (isLoggedIn) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => LoginPage(),
-        ), // or const LoginScreen()
+        MaterialPageRoute(builder: (_) => LoginPage()),
       );
     }
   }

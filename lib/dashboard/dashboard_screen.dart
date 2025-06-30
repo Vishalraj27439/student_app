@@ -4,10 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/dashboard/attendance_pie_chart.dart';
+
 import 'package:student_app/dashboard/homework_model.dart';
+// import 'package:student_app/dashboard/time_table.dart';
+import 'package:student_app/dashboard/timetable_page.dart';
 import 'package:student_app/login_page.dart';
 
 import 'package:student_app/profile_page.dart';
+// import 'package:student_app/dashboard/receiver_card.dart';
+import 'package:student_app/school_info_page.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -221,6 +226,7 @@ class LeftSidebarMenu extends StatelessWidget {
   final String studentPhoto;
 
   const LeftSidebarMenu({
+    super.key,
     required this.studentName,
     required this.schoolName,
     required this.studentPhoto,
@@ -232,7 +238,7 @@ class LeftSidebarMenu extends StatelessWidget {
       child: ListView(
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(color: Colors.deepPurple),
+            decoration: const BoxDecoration(color: Colors.deepPurple),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -240,42 +246,94 @@ class LeftSidebarMenu extends StatelessWidget {
                   radius: 30,
                   backgroundImage: studentPhoto.isNotEmpty
                       ? NetworkImage(studentPhoto)
-                      : AssetImage('assets/images/logo.png') as ImageProvider,
+                      : const AssetImage('assets/images/logo.png')
+                            as ImageProvider,
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Text(
                   'Welcome, $studentName',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
                 Text(
                   '$schoolName (2024-2025)',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
               ],
             ),
           ),
+
           ListTile(
-            leading: Icon(Icons.person),
-            title: Text('Profile'),
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
+            onTap: () {
+              Navigator.pop(context); // Optional: Close drawer
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Profile'),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ProfilePage()),
+                MaterialPageRoute(builder: (_) => ProfilePage()),
               );
             },
           ),
-          ListTile(leading: Icon(Icons.book), title: Text('Subjects')),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
+            leading: const Icon(Icons.book),
+            title: const Text('Homeworks'),
+            // onTap: () {
+            //   Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeworkDetailPage(homework: )));
+            // },
+          ),
+          // ListTile(
+          //   leading: const Icon(Icons.credit_card),
+          //   title: const Text('Receiver Card'),
+          //   onTap: () {
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(builder: (_) => const ReceiverCard()),
+          //     );
+          //   },
+          // ),
+          ListTile(
+            leading: const Icon(Icons.calendar_today),
+            title: const Text('Time-Table'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TimeTablePage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.report),
+            title: const Text('Complaint'),
+            // onTap: () {
+            //   Navigator.push(context, MaterialPageRoute(builder: (_) => const ComplaintPage()));
+            // },
+          ),
+          ListTile(
+            leading: const Icon(Icons.school),
+            title: const Text('School Info'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => SchoolInfoPage()),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
             onTap: () async {
               final prefs = await SharedPreferences.getInstance();
-              await prefs.clear(); // or prefs.remove('isLoggedIn');
+              await prefs.clear();
 
-              // Navigate to login page and remove all previous routes
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (_) => LoginPage()),
                 (route) => false,
               );
             },

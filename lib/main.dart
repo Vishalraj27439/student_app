@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'package:student_app/dashboard/dashboard_screen.dart';
+
 import 'package:student_app/splash_screen.dart';
+
 
 void main() {
   runApp(const MyApp());
