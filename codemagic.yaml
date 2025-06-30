@@ -1,0 +1,24 @@
+workflows:
+  flutter-app:
+    name: Flutter Android + iOS Build
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Install dependencies
+        script: flutter pub get
+
+      - name: Build APK for Android
+        script: flutter build apk --release
+
+      - name: Build iOS .ipa (if signing files are added)
+        script: flutter build ipa --release
+
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      email:
+        recipients:
+          - visuraj27439@gmail.com
