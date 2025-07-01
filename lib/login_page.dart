@@ -45,9 +45,8 @@ class _LoginPageState extends State<LoginPage> {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['status'] == true) {
-     
         final prefs = await SharedPreferences.getInstance();
-           await prefs.clear();
+        await prefs.clear();
         await prefs.setBool('isLoggedIn', true);
         await prefs.setString('token', data['token']);
         await prefs.setString('user_type', data['user_type']);

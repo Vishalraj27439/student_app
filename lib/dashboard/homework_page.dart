@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
+import 'package:student_app/dashboard/homework_detail_page.dart';
 
 class HomeworkPage extends StatefulWidget {
   const HomeworkPage({super.key});
@@ -125,56 +126,66 @@ class _HomeworkPageState extends State<HomeworkPage> {
                     ? attachmentUrl.split('/').last
                     : "";
 
-                return Card(
-                  elevation: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 📚 Homework Info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                hw['HomeworkTitle'] ?? 'Untitled',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.deepPurple,
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => HomeworkDetailPage(homework: hw),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    elevation: 4,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 📚 Homework Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  hw['HomeworkTitle'] ?? 'Untitled',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                "📅 Assignment: ${formatDate(hw['WorkDate'])}",
-                              ),
-                              Text(
-                                "📌 Submission: ${formatDate(hw['SubmissionDate'])}",
-                              ),
-                              const SizedBox(height: 6),
-                              if ((hw['Remark'] ?? '').isNotEmpty)
-                                Text("📝 ${hw['Remark']}"),
-                            ],
-                          ),
-                        ),
-
-                        // 📥 Download Icon if Attachment is not null
-                        if (attachmentUrl != null)
-                          IconButton(
-                            icon: const Icon(
-                              Icons.download_rounded,
-                              color: Colors.deepPurple,
+                                const SizedBox(height: 6),
+                                Text(
+                                  "📅 Assignment: ${formatDate(hw['WorkDate'])}",
+                                ),
+                                Text(
+                                  "📌 Submission: ${formatDate(hw['SubmissionDate'])}",
+                                ),
+                                const SizedBox(height: 6),
+                                if ((hw['Remark'] ?? '').isNotEmpty)
+                                  Text("📝 ${hw['Remark']}"),
+                              ],
                             ),
-                            onPressed: () {
-                              downloadFile(attachmentUrl, fileName);
-                            },
                           ),
-                      ],
+
+                          // 📥 Download Icon if Attachment is not null
+                          if (attachmentUrl != null)
+                            IconButton(
+                              icon: const Icon(
+                                Icons.download_rounded,
+                                color: Colors.deepPurple,
+                              ),
+                              onPressed: () {
+                                downloadFile(attachmentUrl, fileName);
+                              },
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 );

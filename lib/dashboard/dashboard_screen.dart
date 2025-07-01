@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/dashboard/attendance_pie_chart.dart';
 
 import 'package:student_app/dashboard/homework_model.dart';
+import 'package:student_app/dashboard/homework_page.dart';
 // import 'package:student_app/dashboard/time_table.dart';
 import 'package:student_app/dashboard/timetable_page.dart';
 import 'package:student_app/login_page.dart';
@@ -13,6 +14,7 @@ import 'package:student_app/login_page.dart';
 import 'package:student_app/profile_page.dart';
 // import 'package:student_app/dashboard/receiver_card.dart';
 import 'package:student_app/school_info_page.dart';
+import 'package:student_app/view_complaints_page.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -282,9 +284,12 @@ class LeftSidebarMenu extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.book),
             title: const Text('Homeworks'),
-            // onTap: () {
-            //   Navigator.push(context, MaterialPageRoute(builder: (_) => const HomeworkDetailPage(homework: )));
-            // },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => HomeworkPage()),
+              );
+            },
           ),
           // ListTile(
           //   leading: const Icon(Icons.credit_card),
@@ -309,9 +314,12 @@ class LeftSidebarMenu extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.report),
             title: const Text('Complaint'),
-            // onTap: () {
-            //   Navigator.push(context, MaterialPageRoute(builder: (_) => const ComplaintPage()));
-            // },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ViewComplaintPage()),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.school),
