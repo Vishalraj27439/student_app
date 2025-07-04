@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:student_app/complaint_detail_page.dart';
+import 'package:student_app/complaint/addComplaint.dart';
+import 'package:student_app/complaint/complaint_detail_page.dart';
 import 'package:student_app/dashboard/dashboard_screen.dart';
 
 class ViewComplaintPage extends StatefulWidget {
@@ -97,17 +99,16 @@ class _ViewComplaintPageState extends State<ViewComplaintPage> {
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (_) => ComplaintDetailPage(
-      complaintId: complaint['id'],
-      date: complaint['Date'],
-      description: complaint['Description'],
-      status: complaint['Status'],
-    ),
-  ),
-);
-
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ComplaintDetailPage(
+                          complaintId: complaint['id'],
+                          date: complaint['Date'],
+                          description: complaint['Description'],
+                          status: complaint['Status'],
+                        ),
+                      ),
+                    );
                   },
                   child: Card(
                     elevation: 3,
@@ -128,11 +129,12 @@ class _ViewComplaintPageState extends State<ViewComplaintPage> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                complaint['Date'] ?? '',
+                                formatDate(complaint['Date'] ?? ''),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+
                               const Spacer(),
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -174,6 +176,28 @@ class _ViewComplaintPageState extends State<ViewComplaintPage> {
                 );
               },
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddComplaint()),
+          ).then((_) {
+            // Refresh complaints after returning
+            fetchComplaints();
+          });
+        },
+        backgroundColor: Colors.deepPurple,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
+  }
+}
+
+String formatDate(String dateStr) {
+  try {
+    final date = DateTime.parse(dateStr);
+    return DateFormat('dd-MM-yyyy').format(date);
+  } catch (e) {
+    return dateStr;
   }
 }

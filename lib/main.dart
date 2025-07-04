@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-// import 'package:student_app/complaint_detail_page.dart';
+// import 'package:student_app/dashboard/homework_page.dart';
 import 'package:student_app/splash_screen.dart';
-// import 'package:student_app/dashboard/timetable_page.dart';
+// import 'package:student_app/payment/fees_page.dart';
 
-// import 'package:student_app/splash_screen.dart';
-// import 'package:student_app/view_complaints_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      home: SplashScreen()
     );
   }
 }

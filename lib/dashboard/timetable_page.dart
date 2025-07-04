@@ -135,7 +135,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
                             } else if (slot == "2") {
                               bgColor = Colors.orange;
                             } else {
-                              bgColor = Colors.green;
+                              bgColor = Colors.deepPurple;
                             }
 
                             return Card(

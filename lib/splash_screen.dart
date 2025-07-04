@@ -39,22 +39,22 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple.shade50,
+      backgroundColor:Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/images/logo.png', height: 120),
+            Image.asset('assets/images/logo_new.png', height: 120),
             const SizedBox(height: 20),
-            const Text(
-              'Welcome to EduSathi',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
-            ),
-            const SizedBox(height: 10),
+            // const Text(
+            //   'Welcome to EduSathi',
+            //   style: TextStyle(
+            //     fontSize: 22,
+            //     fontWeight: FontWeight.bold,
+            //     color: Colors.deepPurple,
+            //   ),
+            // ),
+            // const SizedBox(height: 10),
             const CircularProgressIndicator(color: Colors.deepPurple),
           ],
         ),

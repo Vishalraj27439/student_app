@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:student_app/changePasswordPage.dart';
 import 'api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:student_app/change_password_page.dart';
+
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -12,15 +15,18 @@ class _ProfilePageState extends State<ProfilePage> {
   String studentName = "";
   String rollNo = "";
   String className = "";
-  String section = "A";
+  String section = "";
   String contact = "";
-  String address = "Not Provided";
+  String address = "";
   String fatherName = "";
   String motherName = "";
   String dob = "";
   String bloodGroup = "";
   String aadhaar = "-";
   String studentPhoto = "";
+  String gender = '';
+  String adDate = '';
+  String LedNo = '';
 
   @override
   void initState() {
@@ -47,12 +53,15 @@ class _ProfilePageState extends State<ProfilePage> {
         final prefs = await SharedPreferences.getInstance();
         // Save data for future access
         await prefs.setString('roll_no', data['RollNo'].toString());
+        await prefs.setString('section', data['section'].toString());
         await prefs.setString('mobile_no', data['MobileNo'].toString());
         await prefs.setString('father_name', data['FatherName'] ?? '');
         await prefs.setString('mother_name', data['MotherName'] ?? '');
         await prefs.setString('dob', data['DOB'] ?? '');
         await prefs.setString('blood_group', data['BloodGroup'] ?? '');
         await prefs.setString('aadhaar', data['LedgerNo'] ?? '');
+        await prefs.setString('gender', data['Gender'] ?? '');
+        await prefs.setString('address', data['Address'] ?? '');
 
         // Update UI
         setState(() {
@@ -61,8 +70,12 @@ class _ProfilePageState extends State<ProfilePage> {
           fatherName = data['FatherName'] ?? '';
           motherName = data['MotherName'] ?? '';
           dob = data['DOB'] ?? '';
+          gender = data['Gender'] ?? '';
           bloodGroup = data['BloodGroup'] ?? '';
           aadhaar = data['LedgerNo'] ?? '';
+          address = data['Address'] ?? '';
+          LedNo = data['LedgerNo'] ?? '';
+          adDate = data['AdmissionDate'] ?? '';
         });
       } else {
         print('❌ Profile fetch failed: ${response.statusCode}');
@@ -113,33 +126,41 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           SizedBox(height: 5),
-                          Text("Roll No: $rollNo"),
+
                           Text("Class: $className - $section"),
+                          Text("Roll No: $rollNo"),
                         ],
                       ),
                     ),
                   ],
                 ),
                 Divider(height: 30, thickness: 1),
+                buildInfoRow(Icons.people, "Father's Name", "$fatherName "),
+                buildInfoRow(Icons.people, "Mother's Name", " $motherName"),
+                buildInfoRow(Icons.person, "Gender", gender),
                 buildInfoRow(Icons.phone, "Contact", contact),
-                buildInfoRow(
-                  Icons.class_,
-                  "Class & Section",
-                  "$className - $section",
-                ),
-                buildInfoRow(Icons.location_on, "Address", address),
-                buildInfoRow(
-                  Icons.people,
-                  "Parents",
-                  "$fatherName & $motherName",
-                ),
                 buildInfoRow(Icons.calendar_today, "DOB", dob),
-                buildInfoRow(Icons.water_drop, "Blood Group", bloodGroup),
-                buildInfoRow(Icons.credit_card, "Aadhaar", aadhaar),
-                SizedBox(height: 20),
+                buildInfoRow(
+                  Icons.calendar_today,
+                  "Addmission Date",
+                  '$adDate',
+                ),
+                buildInfoRow(Icons.card_membership, "Ledger No.", '$LedNo'),
+                buildInfoRow(Icons.card_membership, "Religion", '$LedNo'),
+                buildInfoRow(Icons.card_membership, "Category", '$LedNo'),
+                buildInfoRow(Icons.card_membership, "Caste", '$LedNo'),
+                buildInfoRow(Icons.water_drop, "Blood Group", "$bloodGroup"),
+                buildInfoRow(Icons.location_on, "Address", address),
+
+                SizedBox(height: 10),
                 ElevatedButton.icon(
                   onPressed: () {
-                    // TODO: Navigate to change password
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ChangePasswordPage(),
+                      ),
+                    );
                   },
                   icon: Icon(Icons.lock, color: Colors.white),
                   label: Text(
@@ -163,7 +184,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget buildInfoRow(IconData icon, String title, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           Icon(icon, color: Colors.deepPurple),
