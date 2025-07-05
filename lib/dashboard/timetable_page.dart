@@ -104,6 +104,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
       appBar: AppBar(
         title: const Text("Time Table", style: TextStyle(color: Colors.white)),
         centerTitle: true,
+        iconTheme: IconThemeData(color: Colors.white),
         elevation: 2,
         backgroundColor: Colors.deepPurple,
       ),
@@ -139,77 +140,82 @@ class _TimeTablePageState extends State<TimeTablePage> {
                             }
 
                             return Card(
-                              elevation: 3,
+                              elevation: 2,
                               margin: const EdgeInsets.only(bottom: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 80,
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: bgColor,
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(12),
-                                        bottomLeft: Radius.circular(12),
+                              child: IntrinsicHeight(
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Container(
+                                      width: 80,
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: bgColor,
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          bottomLeft: Radius.circular(12),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            period['Period'] ?? '',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            "${period['FromTime']} - ${period['ToTime']}",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          period['Period'] ?? '',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          "${period['FromTime']} - ${period['ToTime']}",
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: isLunch
-                                          ? const Text(
-                                              "LUNCH BREAK",
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            )
-                                          : Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  "Subject: ${period['Subject'] ?? '-'}",
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.w600,
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12),
+                                        child: isLunch
+                                            ? const Text(
+                                                "LUNCH BREAK",
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              )
+                                            : Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "Subject: ${period['Subject'] ?? '-'}",
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
                                                   ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  "Teacher: ${period['Teacher'] ?? '-'}",
-                                                ),
-                                                Text(
-                                                  "Room No: ${period['RoomNo'] ?? '-'}",
-                                                ),
-                                              ],
-                                            ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    "Teacher: ${period['Teacher'] ?? '-'}",
+                                                  ),
+                                                  Text(
+                                                    "Room No: ${period['RoomNo'] ?? '-'}",
+                                                  ),
+                                                ],
+                                              ),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -222,9 +228,10 @@ class _TimeTablePageState extends State<TimeTablePage> {
 
   Widget _buildDaySelector() {
     return SizedBox(
-      height: 50,
+      height: 45,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: days.length,
         itemBuilder: (context, index) {
           final day = days[index];
@@ -241,19 +248,26 @@ class _TimeTablePageState extends State<TimeTablePage> {
               margin: const EdgeInsets.symmetric(horizontal: 6),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.deepPurple : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(25),
+                color: isSelected ? Colors.deepPurple : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.deepPurple, width: 1.2),
               ),
-              child: Center(
-                child: Text(
-                  day,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.black,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+              child: Row(
+                children: [
+                  if (isSelected) ...[
+                    const Icon(Icons.check, color: Colors.white, size: 16),
+                    const SizedBox(width: 4),
+                  ],
+                  Text(
+                    day,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.black,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           );

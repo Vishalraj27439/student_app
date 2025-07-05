@@ -5,7 +5,6 @@ import 'api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:student_app/change_password_page.dart';
 
-
 class ProfilePage extends StatefulWidget {
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -22,7 +21,9 @@ class _ProfilePageState extends State<ProfilePage> {
   String motherName = "";
   String dob = "";
   String bloodGroup = "";
-  String aadhaar = "-";
+  String category = "-";
+  String caste = '';
+  String religion = '';
   String studentPhoto = "";
   String gender = '';
   String adDate = '';
@@ -41,6 +42,7 @@ class _ProfilePageState extends State<ProfilePage> {
       studentName = prefs.getString('student_name') ?? '';
       className = prefs.getString('class_name') ?? '';
       studentPhoto = prefs.getString('student_photo') ?? '';
+      section = prefs.getString('section') ?? '';
     });
   }
 
@@ -49,11 +51,13 @@ class _ProfilePageState extends State<ProfilePage> {
       final response = await ApiService.post('/student/profile');
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print("📦 API Profile Data: $data");
+        print("📦 Full API Response Body: ${response.body}");
 
         final prefs = await SharedPreferences.getInstance();
         // Save data for future access
         await prefs.setString('roll_no', data['RollNo'].toString());
-        await prefs.setString('section', data['section'].toString());
+        // await prefs.setString('section', data['section'] ?? '');
         await prefs.setString('mobile_no', data['MobileNo'].toString());
         await prefs.setString('father_name', data['FatherName'] ?? '');
         await prefs.setString('mother_name', data['MotherName'] ?? '');
@@ -66,13 +70,16 @@ class _ProfilePageState extends State<ProfilePage> {
         // Update UI
         setState(() {
           rollNo = data['RollNo'].toString();
+          section = prefs.getString('section') ?? '';
           contact = data['MobileNo'].toString();
           fatherName = data['FatherName'] ?? '';
           motherName = data['MotherName'] ?? '';
           dob = data['DOB'] ?? '';
           gender = data['Gender'] ?? '';
           bloodGroup = data['BloodGroup'] ?? '';
-          aadhaar = data['LedgerNo'] ?? '';
+          caste = data['Caste'] ?? '';
+          religion = data['Religion'] ?? '';
+          category = data['Category'] ?? '';
           address = data['Address'] ?? '';
           LedNo = data['LedgerNo'] ?? '';
           adDate = data['AdmissionDate'] ?? '';
@@ -91,6 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         title: Text("Student Profile", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.deepPurple,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -110,7 +118,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       backgroundImage: NetworkImage(
                         studentPhoto.isNotEmpty
                             ? studentPhoto
-                            : 'https://via.placeholder.com/150',
+                            : 'https/images/logo.png',
                       ),
                     ),
                     SizedBox(width: 20),
@@ -139,16 +147,16 @@ class _ProfilePageState extends State<ProfilePage> {
                 buildInfoRow(Icons.people, "Mother's Name", " $motherName"),
                 buildInfoRow(Icons.person, "Gender", gender),
                 buildInfoRow(Icons.phone, "Contact", contact),
-                buildInfoRow(Icons.calendar_today, "DOB", dob),
+                buildInfoRow(Icons.cake, "Date Of Birth", dob),
                 buildInfoRow(
                   Icons.calendar_today,
                   "Addmission Date",
                   '$adDate',
                 ),
                 buildInfoRow(Icons.card_membership, "Ledger No.", '$LedNo'),
-                buildInfoRow(Icons.card_membership, "Religion", '$LedNo'),
-                buildInfoRow(Icons.card_membership, "Category", '$LedNo'),
-                buildInfoRow(Icons.card_membership, "Caste", '$LedNo'),
+                buildInfoRow(Icons.self_improvement, "Religion", '$religion'),
+                buildInfoRow(Icons.badge, "Category", '$category'),
+                buildInfoRow(Icons.label_important, "Caste", '$caste'),
                 buildInfoRow(Icons.water_drop, "Blood Group", "$bloodGroup"),
                 buildInfoRow(Icons.location_on, "Address", address),
 

@@ -57,6 +57,7 @@ class _LoginPageState extends State<LoginPage> {
         );
         await prefs.setString('class_name', data['profile']['class_name']);
         await prefs.setString('school_name', data['profile']['school_name']);
+        await prefs.setString('section', data['profile']['section']);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -94,7 +94,7 @@ class _FeeDetailsPageState extends State<FeeDetailsPage> {
         backgroundColor: Colors.deepPurple,
         title: const Text("Fee Details", style: TextStyle(color: Colors.white)),
         centerTitle: true,
-        // iconTheme: Color(00000),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [

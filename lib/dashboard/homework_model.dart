@@ -1,107 +1,12 @@
-// import 'package:flutter/material.dart';
-// import 'package:student_app/dashboard/all_homeworks_page.dart';
-// import 'package:student_app/dashboard/homework_detail_page.dart';
-// // import 'package:url_launcher/url_launcher.dart';
-
-// final List<Map<String, String>> recentHomeworks = [
-//   {
-//     'subject': 'Math',
-//     'title': 'Algebra Practice',
-//     'date': '24 June 2025',
-//     'url': 'url site',
-//   },
-//   {
-//     'subject': 'Science',
-//     'title': 'Chapter 5 Notes',
-//     'date': '23 June 2025',
-//     'url': 'https://example.com/homeworks/ch5.pdf',
-//   },
-// ];
-
-// Widget buildRecentHomeworks(
-//   BuildContext context,
-//   List<Map<String, dynamic>> homeworks,
-// ) {
-//   final limitedHomeworks = homeworks.take(3).toList();
-
-//   return Container(
-//     padding: EdgeInsets.all(8),
-//     decoration: BoxDecoration(
-//       color: Colors.white,
-//       borderRadius: BorderRadius.circular(16),
-//       boxShadow: [
-//         BoxShadow(
-//           color: Colors.grey.withOpacity(0.2),
-//           blurRadius: 6,
-//           offset: Offset(0, 3),
-//         ),
-//       ],
-//     ),
-//     child: Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Row(
-//           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//           children: [
-//             Text(
-//               '📝 Recent Homeworks',
-//               style: TextStyle(
-//                 fontSize: 18,
-//                 fontWeight: FontWeight.bold,
-//                 color: Colors.deepPurple,
-//               ),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(
-//                     builder: (_) => AllHomeworksPage(homeworks: homeworks),
-//                   ),
-//                 );
-//               },
-//               child: Text("View All"),
-//             ),
-//           ],
-//         ),
-
-//         limitedHomeworks.isEmpty
-//             ? Text("No homeworks available.")
-//             : ListView.builder(
-//                 shrinkWrap: true,
-//                 physics: NeverScrollableScrollPhysics(),
-//                 itemCount: limitedHomeworks.length,
-//                 itemBuilder: (context, index) {
-//                   final hw = limitedHomeworks[index];
-//                   return ListTile(
-//                     onTap: () {
-//                       Navigator.push(
-//                         context,
-//                         MaterialPageRoute(
-//                           builder: (_) => HomeworkDetailPage(homework: hw),
-//                         ),
-//                       );
-//                     },
-//                     leading: Icon(Icons.book, color: Colors.deepPurple),
-//                     title: Text(
-//                       hw['HomeworkTitle'] ?? '',
-//                       style: TextStyle(fontSize: 13),
-//                     ),
-//                     subtitle: Text('Submission: ${hw['SubmissionDate']}'),
-//                     trailing: hw['Attachment'] != null
-//                         ? Icon(Icons.download, color: Colors.deepPurple)
-//                         : SizedBox.shrink(),
-//                   );
-//                 },
-//               ),
-//       ],
-//     ),
-//   );
-// }
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart'; // Add this package
-import 'package:student_app/dashboard/all_homeworks_page.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:open_file/open_file.dart';
 import 'package:student_app/dashboard/homework_detail_page.dart';
+import 'package:student_app/dashboard/homework_page.dart';
 
 // Function to format the date
 String formatDate(String? inputDate) {
@@ -111,6 +16,43 @@ String formatDate(String? inputDate) {
     return DateFormat('dd-MM-yyyy').format(date);
   } catch (e) {
     return inputDate; // fallback to raw string
+  }
+}
+
+Future<void> downloadFile(
+  BuildContext context,
+  String fileUrl,
+  String fileName,
+) async {
+  if (Platform.isAndroid) {
+    var status = await Permission.manageExternalStorage.request();
+    if (!status.isGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Storage permission is required")),
+      );
+      return;
+    }
+  }
+
+  try {
+    final response = await http.get(Uri.parse(fileUrl));
+    if (response.statusCode == 200) {
+      final dir = await getExternalStorageDirectory();
+      final file = File('${dir!.path}/$fileName');
+      await file.writeAsBytes(response.bodyBytes);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Downloaded to ${file.path}")));
+
+      await OpenFile.open(file.path);
+    } else {
+      throw Exception('Download failed');
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text("Download error: $e")));
   }
 }
 
@@ -151,9 +93,7 @@ Widget buildRecentHomeworks(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => AllHomeworksPage(homeworks: homeworks),
-                  ),
+                  MaterialPageRoute(builder: (_) => HomeworkPage()),
                 );
               },
               child: Text("View All"),
@@ -187,7 +127,22 @@ Widget buildRecentHomeworks(
                       style: TextStyle(fontSize: 12),
                     ),
                     trailing: hw['Attachment'] != null
-                        ? Icon(Icons.download, color: Colors.deepPurple)
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.download,
+                              color: Colors.deepPurple,
+                            ),
+                            onPressed: () {
+                              String fileUrl = hw['Attachment'];
+                              String fileName = fileUrl.split('/').last;
+
+                              if (!fileUrl.startsWith('http')) {
+                                fileUrl = 'https://school.edusathi.in/$fileUrl';
+                              }
+
+                              downloadFile(context, fileUrl, fileName);
+                            },
+                          )
                         : SizedBox.shrink(),
                   );
                 },

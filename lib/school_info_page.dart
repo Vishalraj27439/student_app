@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
   String schoolName = "My School";
   String schoolLogo = "";
   Map<String, String> schoolDetails = {};
+  bool isloading = true;
 
   @override
   void initState() {
@@ -27,10 +27,7 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
 
     final response = await http.post(
       Uri.parse('https://school.edusathi.in/api/school'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-      },
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
 
     if (response.statusCode == 200) {
@@ -47,6 +44,7 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
           "Address": data['Address'] ?? '',
           "Principal": data['PrincipalName'] ?? '',
         };
+        isloading = false;
       });
     } else {
       print("❌ School info fetch failed: ${response.statusCode}");
@@ -57,67 +55,95 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("My School Information", style: TextStyle(color: Colors.white)),
+        title: Text(
+          " School Information",
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.deepPurple,
         leading: BackButton(),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       backgroundColor: Colors.deepPurple[50],
-      body: SingleChildScrollView(
-        child: Card(
-          margin: EdgeInsets.all(16),
-          elevation: 8,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Logo & Name
-                Column(
-                  children: [
-                    schoolLogo.isNotEmpty
-                        ? Image.network(schoolLogo, height: 100)
-                        : Image.asset("assets/images/logo.png", height: 100),
-                    SizedBox(height: 10),
-                    Text(
-                      schoolName,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
-                    ),
-                  ],
+      body: isloading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Card(
+                margin: EdgeInsets.all(16),
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                SizedBox(height: 20),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      // Logo & Name
+                      Column(
+                        children: [
+                          schoolLogo.isNotEmpty
+                              ? Image.network(schoolLogo, height: 100)
+                              : Image.asset(
+                                  "assets/images/logo.png",
+                                  height: 100,
+                                ),
+                          SizedBox(height: 10),
+                          Text(
+                            schoolName,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20),
 
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    border: Border(left: BorderSide(color: Colors.blue, width: 4)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: Text("School Details", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-                  ),
-                ),
-                SizedBox(height: 16),
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          border: Border(
+                            left: BorderSide(color: Colors.blue, width: 4),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Text(
+                            "School Details",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16),
 
-                ...schoolDetails.entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(flex: 3, child: Text(entry.key, style: TextStyle(fontWeight: FontWeight.bold))),
-                        Expanded(flex: 5, child: Text(entry.value)),
-                      ],
-                    ),
+                      ...schoolDetails.entries.map(
+                        (entry) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  entry.key,
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              Expanded(flex: 5, child: Text(entry.value)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }
-
