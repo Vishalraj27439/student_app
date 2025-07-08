@@ -2,7 +2,10 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services") version "4.4.0" 
 }
+
+
 
 android {
     namespace = "com.techinnovationapp.edusathi"
@@ -18,14 +21,13 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-   defaultConfig {
-    applicationId = "com.techinnovationapp.edusathi"
-    minSdk = 21
-    targetSdk = 34  
-    versionCode = flutter.versionCode
-    versionName = flutter.versionName
-}
-
+    defaultConfig {
+        applicationId = "com.techinnovationapp.edusathi"
+        minSdk = 21
+        targetSdk = 34
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
 
     buildTypes {
         release {
@@ -37,3 +39,9 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    implementation("com.google.firebase:firebase-messaging:24.0.0")
+}
+
+

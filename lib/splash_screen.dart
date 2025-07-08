@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/dashboard/dashboard_screen.dart';
 import 'package:student_app/login_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:student_app/notification/notification_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,11 +16,30 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    initializeNotifications();
     checkLoginStatus();
   }
 
+  void initializeNotifications() async {
+    // 🔔 Local notification setup
+    NotificationService.initialize(context);
+
+    // 🔔 Foreground notification handler
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("📲 [Foreground] ${message.notification?.title}");
+      NotificationService.display(message);
+    });
+
+    // 🔒 Permission request (needed for Android 13+)
+    await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
+
   Future<void> checkLoginStatus() async {
-    await Future.delayed(const Duration(seconds: 2)); // for splash
+    await Future.delayed(const Duration(seconds: 2)); // Splash delay
 
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
@@ -39,22 +60,13 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:Colors.white,
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset('assets/images/logo_new.png', height: 120),
             const SizedBox(height: 20),
-            // const Text(
-            //   'Welcome to EduSathi',
-            //   style: TextStyle(
-            //     fontSize: 22,
-            //     fontWeight: FontWeight.bold,
-            //     color: Colors.deepPurple,
-            //   ),
-            // ),
-            // const SizedBox(height: 10),
             const CircularProgressIndicator(color: Colors.deepPurple),
           ],
         ),

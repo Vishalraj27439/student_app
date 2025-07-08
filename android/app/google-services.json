@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "362052707848",
+    "project_id": "schoolapp-cf318",
+    "storage_bucket": "schoolapp-cf318.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:362052707848:android:7bd8e5990e5fbe5e31d3bd",
+        "android_client_info": {
+          "package_name": "com.techinnovationapp.edusathi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCs0pLQJ6J46mtq2mhdbRLFkcV4foSzlOM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

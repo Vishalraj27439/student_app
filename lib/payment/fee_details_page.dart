@@ -112,7 +112,9 @@ class _FeeDetailsPageState extends State<FeeDetailsPage> {
                   child: ChoiceChip(
                     label: Text(months[index]),
                     selected: isSelected,
+                    checkmarkColor: Colors.white,
                     selectedColor: Colors.deepPurple,
+
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : Colors.black,
                     ),

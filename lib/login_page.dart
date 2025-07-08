@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,6 +59,8 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('class_name', data['profile']['class_name']);
         await prefs.setString('school_name', data['profile']['school_name']);
         await prefs.setString('section', data['profile']['section']);
+        await sendFcmTokenToLaravel();
+
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -91,6 +94,34 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = false;
     });
   }
+  //for notifcation code is here
+  Future<void> sendFcmTokenToLaravel() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token') ?? '';
+
+  final fcmToken = await FirebaseMessaging.instance.getToken();
+  if (fcmToken == null) {
+    print('❌ FCM token not found');
+    return;
+  }
+
+  final response = await http.post(
+    Uri.parse('https://school.edusathi.in/api/save_token'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: jsonEncode({'fcm_token': fcmToken}),
+  );
+
+  if (response.statusCode == 200) {
+    print('✅ FCM token saved successfully');
+  } else {
+    print('❌ Failed to save FCM token: ${response.body}');
+  }
+}
+
 
   void _launchURL() async {
     final Uri url = Uri.parse('https://www.techinnovationapp.in');
