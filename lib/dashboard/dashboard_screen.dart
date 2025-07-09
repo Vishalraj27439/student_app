@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/dashboard/attendance_pie_chart.dart';
+import 'package:student_app/dashboard/attendance_screen.dart';
 import 'package:student_app/dashboard/homework_model.dart';
 import 'package:student_app/dashboard/homework_page.dart';
 import 'package:student_app/dashboard/timetable_page.dart';
@@ -38,6 +40,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void initState() {
+
+    
     super.initState();
     initData();
   }
@@ -56,7 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     studentPhoto = prefs.getString('student_photo') ?? '';
     schoolName = prefs.getString('school_name') ?? '';
     studentClass = prefs.getString('class_name') ?? '';
-    studentsection = prefs.getString('section') ?? ''; 
+    studentsection = prefs.getString('section') ?? '';
   }
 
   Future<void> fetchDashboardData() async {
@@ -87,6 +91,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
     prefs.getKeys().forEach((key) {
       print('$key = ${prefs.get(key)}');
+      FirebaseMessaging.instance.getToken().then((fcmToken) {
+  print("🟢 FCM Device Token: $fcmToken");
+
+  
+});
+
     });
   }
 
@@ -132,7 +142,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           borderColor: Colors.red,
                           backgroundColor: Colors.red.shade50,
                           textColor: Colors.red,
-                        ),onTap: () => Navigator.push(
+                        ),
+                        onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => FeeDetailsPage()),
                         ),
@@ -144,7 +155,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           borderColor: Colors.green,
                           backgroundColor: Colors.green.shade50,
                           textColor: Colors.green,
-                        ),onTap: () => Navigator.push(
+                        ),
+                        onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => PaymentPage()),
                         ),
@@ -336,6 +348,7 @@ class LeftSidebarMenu extends StatelessWidget {
                 );
               },
             ),
+
             sidebarTile(
               icon: Icons.book,
               title: 'Homeworks',
@@ -343,6 +356,16 @@ class LeftSidebarMenu extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => HomeworkPage()),
+                );
+              },
+            ),
+            sidebarTile(
+              icon: Icons.calendar_month,
+              title: 'Attendance',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => AttendanceScreen()),
                 );
               },
             ),
