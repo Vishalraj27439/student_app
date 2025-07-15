@@ -65,33 +65,37 @@ class TeacherRecentHomeworks extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final hw = limitedHomeworks[index];
                     return ListTile(
-  leading: const Icon(Icons.book, color: Colors.deepPurple),
-  title: Text(hw['HomeworkTitle'] ?? ''),
-  subtitle: Text("Submission: ${hw['SubmissionDate']}"),
-  trailing: hw['Attachment'] != null
-      ? IconButton(
-          icon: const Icon(Icons.download),
-          onPressed: () async {
-            await requestStoragePermission();
+                      leading: const Icon(Icons.book, color: Colors.deepPurple),
+                      title: Text(hw['HomeworkTitle'] ?? ''),
+                      subtitle: Text("Submission: ${hw['SubmissionDate']}"),
+                      trailing: hw['Attachment'] != null
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.download,
+                                color: Colors.deepPurple,
+                              ),
+                              onPressed: () async {
+                                await requestStoragePermission();
 
-            final attachment = hw['Attachment'];
-            final fileUrl = 'https://school.edusathi.in/$attachment';
-            final fileName = fileUrl.split('/').last;
+                                final attachment = hw['Attachment'];
+                                final fileUrl =
+                                    'https://school.edusathi.in/$attachment';
+                                final fileName = fileUrl.split('/').last;
 
-            await downloadFile(context, fileUrl, fileName);
-          },
-        )
-      : null,
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TeacherHomeworkDetailPage(homework: hw),
-      ),
-    );
-  },
-);
-
+                                await downloadFile(context, fileUrl, fileName);
+                              },
+                            )
+                          : null,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                TeacherHomeworkDetailPage(homework: hw),
+                          ),
+                        );
+                      },
+                    );
                   },
                 ),
         ],

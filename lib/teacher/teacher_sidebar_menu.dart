@@ -5,12 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/login_page.dart';
 import 'package:student_app/payment/payment_page.dart';
 import 'package:student_app/school_info_page.dart';
+import 'package:student_app/teacher/complaint_teacher/teacher_complaint_list_page.dart';
+// import 'package:student_app/teacher/complaint_teacher/teacher_view_complaint_page.dart';
 import 'package:student_app/teacher/teacher_attendance_screen.dart';
 import 'package:student_app/teacher/teacher_homework_page.dart';
 import 'package:student_app/teacher/teacher_profile_page.dart';
 import 'package:student_app/dashboard/attendance_screen.dart';
-import 'package:student_app/dashboard/timetable_page.dart';
-import 'package:student_app/complaint/view_complaints_page.dart';
+// import 'package:student_app/complaint/view_complaints_page.dart';
+import 'package:student_app/teacher/teacher_timetable.dart';
 
 class TeacherSidebarMenu extends StatefulWidget {
   const TeacherSidebarMenu({super.key});
@@ -125,14 +127,14 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
           sidebarItem(context, Icons.schedule, 'Timetable', () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const TimeTablePage()),
+              MaterialPageRoute(builder: (_) => TeacherTimeTablePage()),
             );
           }),
 
           sidebarItem(context, Icons.report, 'Complaint', () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ViewComplaintPage()),
+              MaterialPageRoute(builder: (_) => TeacherComplaintListPage()),
             );
           }),
 

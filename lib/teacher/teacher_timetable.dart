@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-class TimeTablePage extends StatefulWidget {
-  const TimeTablePage({super.key});
+class TeacherTimeTablePage extends StatefulWidget {
+  const TeacherTimeTablePage({super.key});
 
   @override
-  State<TimeTablePage> createState() => _TimeTablePageState();
+  State<TeacherTimeTablePage> createState() => _TeacherTimeTablePageState();
 }
 
-class _TimeTablePageState extends State<TimeTablePage> {
+class _TeacherTimeTablePageState extends State<TeacherTimeTablePage> {
   final List<String> days = [
     'Monday',
     'Tuesday',
@@ -23,7 +23,7 @@ class _TimeTablePageState extends State<TimeTablePage> {
   List<dynamic> periods = [];
   bool isLoading = true;
 
-  final String apiUrl = 'https://school.edusathi.in/api/student/timetable';
+  final String apiUrl = 'https://school.edusathi.in/api/teacher/timetable';
 
   @override
   void initState() {
@@ -38,7 +38,6 @@ class _TimeTablePageState extends State<TimeTablePage> {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
-    print("📡 Sending day: $dayCode, Token: $token");
 
     final response = await http.post(
       Uri.parse(apiUrl),
@@ -49,33 +48,21 @@ class _TimeTablePageState extends State<TimeTablePage> {
       },
       body: jsonEncode({'Day': dayCode}),
     );
-    print("📥 API Response: ${response.body}");
+
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-      if (decoded is List) {
-        setState(() {
-          periods = decoded;
-          isLoading = false;
-        });
-      } else {
-        print("⚠️ Not a List: $decoded");
-        print("✅ Parsed ${decoded.length} periods");
-
-        setState(() {
-          periods = [];
-
-          isLoading = false;
-        });
-      }
+      setState(() {
+        periods = decoded;
+        isLoading = false;
+      });
     } else {
-      print("❌ Status ${response.statusCode}");
       setState(() {
         periods = [];
         isLoading = false;
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to load time table')));
+      ).showSnackBar(const SnackBar(content: Text('Failed to load timetable')));
     }
   }
 
@@ -102,9 +89,12 @@ class _TimeTablePageState extends State<TimeTablePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Time Table", style: TextStyle(color: Colors.white)),
-        centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.white),
+        title: const Text(
+          "Teacher Time Table",
+          style: TextStyle(color: Colors.white),
+        ),
+        // centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 2,
         backgroundColor: Colors.deepPurple,
       ),
@@ -128,16 +118,12 @@ class _TimeTablePageState extends State<TimeTablePage> {
                           itemBuilder: (context, index) {
                             final period = periods[index];
                             final slot = period['Slot'];
-                            final isLunch = slot == "2";
+                            final isLunch =
+                                slot == "2" ||
+                                (period['Period']?.toUpperCase() == 'LUNCH');
 
-                            Color bgColor;
-                            if (slot == "1") {
-                              bgColor = Colors.deepPurple;
-                            } else if (slot == "2") {
-                              bgColor = Colors.orange;
-                            } else {
-                              bgColor = Colors.deepPurple;
-                            }
+                            Color bgColor = Colors.deepPurple;
+                            if (slot == "2") bgColor = Colors.orange;
 
                             return Card(
                               elevation: 2,
@@ -218,7 +204,8 @@ class _TimeTablePageState extends State<TimeTablePage> {
                                                   ),
                                                   const SizedBox(height: 4),
                                                   Text(
-                                                    "Teacher: ${period['Teacher'] ?? '-'}",
+                                                    "Class: ${period['Class'] ?? '-'}"
+                                                    "${period['Section'] != null ? ' (${period['Section']})' : ''}",
                                                   ),
                                                   Text(
                                                     "Room No: ${period['RoomNo'] ?? '-'}",
