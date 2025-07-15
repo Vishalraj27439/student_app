@@ -5,13 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/login_page.dart';
 import 'package:student_app/payment/payment_page.dart';
 import 'package:student_app/school_info_page.dart';
+import 'package:student_app/teacher/teacher_attendance_screen.dart';
 import 'package:student_app/teacher/teacher_homework_page.dart';
 import 'package:student_app/teacher/teacher_profile_page.dart';
 import 'package:student_app/dashboard/attendance_screen.dart';
 import 'package:student_app/dashboard/timetable_page.dart';
 import 'package:student_app/complaint/view_complaints_page.dart';
-
-
 
 class TeacherSidebarMenu extends StatefulWidget {
   const TeacherSidebarMenu({super.key});
@@ -116,7 +115,7 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             );
           }),
 
-          sidebarItem(context, Icons.calendar_month, 'Attendance', () {
+          sidebarItem(context, Icons.calendar_month, 'Student Attendance', () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const AttendanceScreen()),
@@ -141,6 +140,12 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const PaymentPage()),
+            );
+          }),
+          sidebarItem(context, Icons.calendar_month, 'My Attendance', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => TeacherAttendanceScreen()),
             );
           }),
 

@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'package:student_app/teacher/teacher_homework_detail_page.dart';
 import 'package:student_app/teacher/teacher_homework_page.dart';
 
 class TeacherRecentHomeworks extends StatelessWidget {
@@ -64,25 +65,33 @@ class TeacherRecentHomeworks extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final hw = limitedHomeworks[index];
                     return ListTile(
-                      leading: const Icon(Icons.book, color: Colors.deepPurple),
-                      title: Text(hw['HomeworkTitle'] ?? ''),
-                      subtitle: Text("Submission: ${hw['SubmissionDate']}"),
-                      trailing: hw['Attachment'] != null
-                          ? IconButton(
-                              icon: const Icon(Icons.download),
-                              onPressed: () async {
-                                await requestStoragePermission();
+  leading: const Icon(Icons.book, color: Colors.deepPurple),
+  title: Text(hw['HomeworkTitle'] ?? ''),
+  subtitle: Text("Submission: ${hw['SubmissionDate']}"),
+  trailing: hw['Attachment'] != null
+      ? IconButton(
+          icon: const Icon(Icons.download),
+          onPressed: () async {
+            await requestStoragePermission();
 
-                                final attachment = hw['Attachment'];
-                                final fileUrl =
-                                    'https://school.edusathi.in/$attachment';
-                                final fileName = fileUrl.split('/').last;
+            final attachment = hw['Attachment'];
+            final fileUrl = 'https://school.edusathi.in/$attachment';
+            final fileName = fileUrl.split('/').last;
 
-                                await downloadFile(context, fileUrl, fileName);
-                              },
-                            )
-                          : const SizedBox.shrink(),
-                    );
+            await downloadFile(context, fileUrl, fileName);
+          },
+        )
+      : null,
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TeacherHomeworkDetailPage(homework: hw),
+      ),
+    );
+  },
+);
+
                   },
                 ),
         ],

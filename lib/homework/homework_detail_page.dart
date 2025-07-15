@@ -33,7 +33,7 @@ Future<void> downloadFile(BuildContext context, String filePath) async {
   try {
     final response = await http.get(Uri.parse(fullUrl));
     if (response.statusCode == 200) {
-      final directory = await getExternalStorageDirectory(); // This is app-specific
+      final directory = await getExternalStorageDirectory(); 
       final fileName = filePath.split('/').last;
       final file = File('${directory!.path}/$fileName');
       await file.writeAsBytes(response.bodyBytes);
