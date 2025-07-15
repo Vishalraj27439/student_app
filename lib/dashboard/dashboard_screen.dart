@@ -5,8 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/dashboard/attendance_pie_chart.dart';
 import 'package:student_app/dashboard/attendance_screen.dart';
-import 'package:student_app/dashboard/homework_model.dart';
-import 'package:student_app/dashboard/homework_page.dart';
+import 'package:student_app/homework/homework_model.dart';
+import 'package:student_app/homework/homework_page.dart';
 import 'package:student_app/dashboard/timetable_page.dart';
 import 'package:student_app/login_page.dart';
 import 'package:student_app/payment/fee_details_page.dart';
@@ -40,8 +40,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void initState() {
-
-    
     super.initState();
     initData();
   }

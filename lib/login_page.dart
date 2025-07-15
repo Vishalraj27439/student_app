@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/dashboard/dashboard_screen.dart';
-import 'package:student_app/dashboard/teacher_dashboard.dart';
+import 'package:student_app/teacher/teacher_dashboard_screen.dart';
+// import 'package:student_app/teacher/teacher_dashboard_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LoginPage extends StatefulWidget {
@@ -51,16 +52,38 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setBool('isLoggedIn', true);
         await prefs.setString('token', data['token']);
         await prefs.setString('user_type', data['user_type']);
-        await prefs.setString('student_name', data['profile']['student_name']);
-        await prefs.setString(
-          'student_photo',
-          data['profile']['student_photo'],
-        );
-        await prefs.setString('class_name', data['profile']['class_name']);
-        await prefs.setString('school_name', data['profile']['school_name']);
-        await prefs.setString('section', data['profile']['section']);
-        await sendFcmTokenToLaravel();
 
+        // 🧠 Role-based parsing
+        if (data['user_type'] == 'Student') {
+          await prefs.setString(
+            'student_name',
+            data['profile']['student_name'] ?? '',
+          );
+          await prefs.setString(
+            'student_photo',
+            data['profile']['student_photo'] ?? '',
+          );
+          await prefs.setString(
+            'class_name',
+            data['profile']['class_name'] ?? '',
+          );
+          await prefs.setString(
+            'school_name',
+            data['profile']['school_name'] ?? '',
+          );
+          await prefs.setString('section', data['profile']['section'] ?? '');
+        } else if (data['user_type'] == 'Teacher') {
+          await prefs.setString('teacher_name', data['profile']['name']);
+          await prefs.setString('teacher_photo', data['profile']['photo']);
+          await prefs.setString('teacher_class', data['profile']['class']);
+          await prefs.setString('teacher_section', data['profile']['section']);
+          await prefs.setString(
+            'school_name',
+            data['profile']['school'] ?? '',
+          );
+        }
+
+        await sendFcmTokenToLaravel();
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -76,13 +99,9 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => TeacherDashboard()),
+            MaterialPageRoute(builder: (_) => TeacherDashboardScreen()),
           );
         }
-      } else {
-        setState(() {
-          _errorMessage = data['message'] ?? 'Login failed';
-        });
       }
     } catch (e) {
       setState(() {
@@ -94,34 +113,34 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = false;
     });
   }
+
   //for notifcation code is here
   Future<void> sendFcmTokenToLaravel() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token') ?? '';
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
 
-  final fcmToken = await FirebaseMessaging.instance.getToken();
-  if (fcmToken == null) {
-    print('❌ FCM token not found');
-    return;
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    if (fcmToken == null) {
+      print('❌ FCM token not found');
+      return;
+    }
+
+    final response = await http.post(
+      Uri.parse('https://school.edusathi.in/api/save_token'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({'fcm_token': fcmToken}),
+    );
+
+    if (response.statusCode == 200) {
+      print('✅ FCM token saved successfully');
+    } else {
+      print('❌ Failed to save FCM token: ${response.body}');
+    }
   }
-
-  final response = await http.post(
-    Uri.parse('https://school.edusathi.in/api/save_token'),
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: jsonEncode({'fcm_token': fcmToken}),
-  );
-
-  if (response.statusCode == 200) {
-    print('✅ FCM token saved successfully');
-  } else {
-    print('❌ Failed to save FCM token: ${response.body}');
-  }
-}
-
 
   void _launchURL() async {
     final Uri url = Uri.parse('https://www.techinnovationapp.in');

@@ -55,7 +55,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       final token = prefs.getString('token') ?? '';
 
       final response = await http.post(
-        Uri.parse('https://school.edusathi.in/api/student/password'),
+        Uri.parse('https://school.edusathi.in/api/password'),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',

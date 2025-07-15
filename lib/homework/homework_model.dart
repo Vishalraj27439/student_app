@@ -5,8 +5,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
-import 'package:student_app/dashboard/homework_detail_page.dart';
-import 'package:student_app/dashboard/homework_page.dart';
+import 'package:student_app/homework/homework_detail_page.dart';
+import 'package:student_app/homework/homework_page.dart';
+// import 'package:student_app/homework/teacher_homework_page.dart';
 
 // Function to format the date
 String formatDate(String? inputDate) {
