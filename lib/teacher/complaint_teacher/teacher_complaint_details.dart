@@ -4,32 +4,31 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class TeacherComplaintHistoryPage extends StatefulWidget {
+class TeacherComplaintDetailPage extends StatefulWidget {
   final int complaintId;
   final String date;
   final String description;
   final int status;
+  final String studentName;
 
-  const TeacherComplaintHistoryPage({
+  const TeacherComplaintDetailPage({
     super.key,
     required this.complaintId,
     required this.date,
     required this.description,
     required this.status,
+    required this.studentName,
   });
 
   @override
-  State<TeacherComplaintHistoryPage> createState() =>
-      _TeacherComplaintHistoryPageState();
+  State<TeacherComplaintDetailPage> createState() => _TeacherComplaintDetailPageState();
 }
 
-class _TeacherComplaintHistoryPageState
-    extends State<TeacherComplaintHistoryPage> {
+class _TeacherComplaintDetailPageState extends State<TeacherComplaintDetailPage> {
   List<dynamic> history = [];
   bool isLoading = true;
 
-  final String apiUrl =
-      'https://school.edusathi.in/api/teacher/complaint/history';
+  final String apiUrl = 'https://school.edusathi.in/api/teacher/complaint/history';
 
   @override
   void initState() {
@@ -51,21 +50,13 @@ class _TeacherComplaintHistoryPageState
       body: jsonEncode({'ComplaintId': widget.complaintId}),
     );
 
-    print("📥 Complaint History: ${response.body}");
+    print("📥 Teacher Complaint History: ${response.body}");
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
-
       if (decoded is List) {
-        // Optional filtering logic if API returns extra history
-        final filtered = decoded.where((entry) {
-          final entryId = entry['ComplaintId'];
-          return entryId == null ||
-              entryId.toString() == widget.complaintId.toString();
-        }).toList();
-
         setState(() {
-          history = filtered;
+          history = decoded;
           isLoading = false;
         });
       }
@@ -74,85 +65,69 @@ class _TeacherComplaintHistoryPageState
         history = [];
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to load complaint history')),
-      );
     }
   }
+
+  String getStatusText(int status) => status == 1 ? "Solved" : "Pending";
+
+  Color getStatusColor(int status) => status == 1 ? Colors.green : Colors.orange;
 
   String formatDate(String rawDate) {
     try {
-      return DateFormat('dd-MM-yyyy').format(DateTime.parse(rawDate));
-    } catch (_) {
+      final parsedDate = DateTime.parse(rawDate);
+      return DateFormat('dd-MM-yyyy').format(parsedDate);
+    } catch (e) {
       return rawDate;
     }
-  }
-
-  String getStatusText(int status) {
-    return status == 1 ? "Solved" : "Pending";
-  }
-
-  Color getStatusColor(int status) {
-    return status == 1 ? Colors.green : Colors.orange;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Complaint Details",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text("Complaint Details", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.deepPurple,
-        iconTheme: const IconThemeData(color: Colors.white),
+        leading: const BackButton(color: Colors.white),
       ),
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.deepPurple))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 📌 Original Complaint Card
+                  // 🔷 Complaint Card
                   Card(
                     elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            widget.studentName,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(
-                                Icons.calendar_today,
-                                color: Colors.deepPurple,
-                              ),
+                              const Icon(Icons.date_range, color: Colors.deepPurple),
                               const SizedBox(width: 8),
                               Text(
                                 formatDate(widget.date),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               const Spacer(),
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: getStatusColor(
-                                    widget.status,
-                                  ).withOpacity(0.1),
-                                  border: Border.all(
-                                    color: getStatusColor(widget.status),
-                                  ),
+                                  color: getStatusColor(widget.status).withOpacity(0.1),
+                                  border: Border.all(color: getStatusColor(widget.status)),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
@@ -174,14 +149,14 @@ class _TeacherComplaintHistoryPageState
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 20),
+
+                  // 🧾 History Section
                   const Text(
                     "Complaint History",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-
                   if (history.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 30),
@@ -189,7 +164,7 @@ class _TeacherComplaintHistoryPageState
                     )
                   else
                     ...history.map(
-                      (entry) => Card(
+                      (item) => Card(
                         elevation: 2,
                         margin: const EdgeInsets.symmetric(vertical: 6),
                         shape: RoundedRectangleBorder(
@@ -202,26 +177,17 @@ class _TeacherComplaintHistoryPageState
                             children: [
                               Row(
                                 children: [
-                                  const Icon(
-                                    Icons.timeline,
-                                    size: 18,
-                                    color: Colors.deepPurple,
-                                  ),
+                                  const Icon(Icons.timeline, size: 18, color: Colors.deepPurple),
                                   const SizedBox(width: 6),
                                   Text(
-                                    formatDate(entry['Date'] ?? ''),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    formatDate(item['Date'] ?? ''),
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                (entry['Description'] ?? '').replaceAll(
-                                  r'\r\n',
-                                  '\n',
-                                ),
+                                item['Description']?.replaceAll(r'\r\n', '\n') ?? '',
                                 style: const TextStyle(fontSize: 14),
                               ),
                             ],

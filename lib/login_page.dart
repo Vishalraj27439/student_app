@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/dashboard/dashboard_screen.dart';
 import 'package:student_app/teacher/teacher_dashboard_screen.dart';
-// import 'package:student_app/teacher/teacher_dashboard_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LoginPage extends StatefulWidget {
@@ -15,17 +14,19 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   String baseUrl = "https://school.edusathi.in/api";
-
   final TextEditingController idController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
   bool _obscureText = true;
   bool _isLoading = false;
   String _errorMessage = '';
 
   String selectedRole = 'Student'; // Default login role
+
   void _login() async {
     setState(() {
       _isLoading = true;
+      _errorMessage = '';
     });
 
     final url = Uri.parse('$baseUrl/login');
@@ -40,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
         body: jsonEncode({
           'username': idController.text.trim(),
           'password': passwordController.text.trim(),
-          'type': selectedRole, // Should be 'Student' or 'Teacher'
+          'type': selectedRole,
         }),
       );
 
@@ -53,7 +54,6 @@ class _LoginPageState extends State<LoginPage> {
         await prefs.setString('token', data['token']);
         await prefs.setString('user_type', data['user_type']);
 
-        // 🧠 Role-based parsing
         if (data['user_type'] == 'Student') {
           await prefs.setString(
             'student_name',
@@ -77,10 +77,7 @@ class _LoginPageState extends State<LoginPage> {
           await prefs.setString('teacher_photo', data['profile']['photo']);
           await prefs.setString('teacher_class', data['profile']['class']);
           await prefs.setString('teacher_section', data['profile']['section']);
-          await prefs.setString(
-            'school_name',
-            data['profile']['school'] ?? '',
-          );
+          await prefs.setString('school_name', data['profile']['school'] ?? '');
         }
 
         await sendFcmTokenToLaravel();
@@ -102,10 +99,15 @@ class _LoginPageState extends State<LoginPage> {
             MaterialPageRoute(builder: (_) => TeacherDashboardScreen()),
           );
         }
+      } else {
+        setState(() {
+          _errorMessage =
+              data['message'] ?? "Invalid credentials. Please try again.";
+        });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error: $e';
+        _errorMessage = 'Something went wrong. Please try again later.';
       });
     }
 
@@ -114,12 +116,11 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  //for notifcation code is here
   Future<void> sendFcmTokenToLaravel() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
-
     final fcmToken = await FirebaseMessaging.instance.getToken();
+
     if (fcmToken == null) {
       print('❌ FCM token not found');
       return;
@@ -149,7 +150,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  //toggle bar
   Widget roleToggleSwitch() {
     return Container(
       width: 250,
@@ -234,11 +234,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.white],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+          gradient: LinearGradient(colors: [Colors.white, Colors.white]),
         ),
         child: SafeArea(
           child: Center(
@@ -246,7 +242,6 @@ class _LoginPageState extends State<LoginPage> {
               padding: EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // Logo and School Title
                   Image.asset('assets/images/logo.png', height: 80),
                   SizedBox(height: 10),
                   Text(
@@ -264,7 +259,6 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(fontSize: 14),
                   ),
                   SizedBox(height: 20),
-
                   roleToggleSwitch(),
                   SizedBox(height: 30),
 
@@ -281,7 +275,7 @@ class _LoginPageState extends State<LoginPage> {
                   TextField(
                     controller: idController,
                     decoration: InputDecoration(
-                      labelText: isStudent ? "Student ID" : "Teacher ID ",
+                      labelText: isStudent ? "Student ID" : "Teacher ID",
                       prefixIcon: Icon(Icons.person),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -292,7 +286,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   SizedBox(height: 15),
 
-                  // Password Field
                   TextField(
                     controller: passwordController,
                     obscureText: _obscureText,
@@ -305,9 +298,8 @@ class _LoginPageState extends State<LoginPage> {
                               ? Icons.visibility
                               : Icons.visibility_off,
                         ),
-                        onPressed: () {
-                          setState(() => _obscureText = !_obscureText);
-                        },
+                        onPressed: () =>
+                            setState(() => _obscureText = !_obscureText),
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -316,11 +308,42 @@ class _LoginPageState extends State<LoginPage> {
                       fillColor: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 10),
+
+                  if (_errorMessage.isNotEmpty)
+                    Container(
+                      margin: EdgeInsets.only(top: 16),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              _errorMessage,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                   SizedBox(height: 40),
 
-                  // Login Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -331,7 +354,6 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-
                       onPressed: _isLoading ? null : _login,
                       child: _isLoading
                           ? SizedBox(
@@ -353,40 +375,9 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                     ),
                   ),
-                  if (_errorMessage.isNotEmpty)
-                    Container(
-                      margin: EdgeInsets.only(top: 16),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            _errorMessage,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
                   SizedBox(height: 20),
 
-                  // Footer
                   Wrap(
                     alignment: WrapAlignment.center,
                     children: [
@@ -404,7 +395,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       SizedBox(width: 5),
                       Text("Visit our website", style: TextStyle(fontSize: 12)),
-
                       GestureDetector(
                         onTap: _launchURL,
                         child: Text(

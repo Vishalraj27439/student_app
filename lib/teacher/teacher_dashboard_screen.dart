@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:student_app/payment/payment_teacher_screen.dart';
+import 'package:student_app/teacher/complaint_teacher/teacher_complaint_list_page.dart';
 // import 'package:student_app/dashboard/attendance_pie_chart.dart';
 // import 'package:student_app/homework/homework_model.dart';
 import 'package:student_app/teacher/teacher_recent_homework.dart';
@@ -159,26 +161,32 @@ print("🪪 Token being used: $token");
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      DashboardCard(
-                        title: 'Students',
-                        value: students.toString(),
-                        borderColor: Colors.blue,
-                        backgroundColor: const Color(0xFFE3F2FD),
-                        textColor: Colors.blue,
+                      GestureDetector(
+                        child: DashboardCard(
+                          title: 'Students',
+                          value: students.toString(),
+                          borderColor: Colors.blue,
+                          backgroundColor: const Color(0xFFE3F2FD),
+                          textColor: Colors.blue,
+                        ),
                       ),
-                      DashboardCard(
-                        title: 'Payments',
-                        value: '$payments',
-                        borderColor: Colors.green,
-                        backgroundColor: const Color(0xFFE8F5E9),
-                        textColor: Colors.green,
+                      GestureDetector(
+                        child: DashboardCard(
+                          title: 'Payments',
+                          value: '$payments',
+                          borderColor: Colors.green,
+                          backgroundColor: const Color(0xFFE8F5E9),
+                          textColor: Colors.green,
+                        ),onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_)=>PaymentTeacherScreen())),
                       ),
-                      DashboardCard(
-                        title: 'Complaints',
-                        value: complaints.toString(),
-                        borderColor: Colors.red,
-                        backgroundColor: const Color(0xFFFFEBEE),
-                        textColor: Colors.red,
+                      GestureDetector(
+                        child: DashboardCard(
+                          title: 'Complaints',
+                          value: complaints.toString(),
+                          borderColor: Colors.red,
+                          backgroundColor: const Color(0xFFFFEBEE),
+                          textColor: Colors.red,
+                        ),onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_)=>TeacherComplaintListPage()))
                       ),
                     ],
                   ),

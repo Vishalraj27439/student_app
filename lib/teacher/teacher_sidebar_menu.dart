@@ -3,11 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/login_page.dart';
-import 'package:student_app/payment/payment_page.dart';
+// import 'package:student_app/teacher/teacher_dashboard_screen.dart';
+
+// import 'package:student_app/payment/payment_page.dart';
+import 'package:student_app/payment/payment_teacher_screen.dart';
 import 'package:student_app/school_info_page.dart';
+import 'package:student_app/teacher/Attendance_UI/mark_attendance_page.dart';
 import 'package:student_app/teacher/complaint_teacher/teacher_complaint_list_page.dart';
 // import 'package:student_app/teacher/complaint_teacher/teacher_view_complaint_page.dart';
 import 'package:student_app/teacher/teacher_attendance_screen.dart';
+import 'package:student_app/teacher/teacher_dashboard_screen.dart';
 import 'package:student_app/teacher/teacher_homework_page.dart';
 import 'package:student_app/teacher/teacher_profile_page.dart';
 import 'package:student_app/dashboard/attendance_screen.dart';
@@ -31,6 +36,7 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
   void initState() {
     super.initState();
     loadTeacherInfo();
+    // fetchDashboardData();
   }
 
   Future<void> loadTeacherInfo() async {
@@ -100,7 +106,10 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
           ),
 
           sidebarItem(context, Icons.dashboard, 'Dashboard', () {
-            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const TeacherDashboardScreen()),
+            );
           }),
 
           sidebarItem(context, Icons.person, 'Profile', () {
@@ -138,10 +147,17 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             );
           }),
 
+          sidebarItem(context, Icons.report, 'tESTING', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => MarkAttendancePage()),
+            );
+          }),
+
           sidebarItem(context, Icons.payment, 'Payments', () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const PaymentPage()),
+              MaterialPageRoute(builder: (_) => PaymentTeacherScreen()),
             );
           }),
           sidebarItem(context, Icons.calendar_month, 'My Attendance', () {

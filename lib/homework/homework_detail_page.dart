@@ -20,38 +20,40 @@ class HomeworkDetailPage extends StatelessWidget {
       return dateStr;
     }
   }
-Future<void> downloadFile(BuildContext context, String filePath) async {
-  if (Platform.isAndroid && await Permission.manageExternalStorage.request().isDenied) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Storage permission is required")),
-    );
-    return;
-  }
 
-  final fullUrl = 'https://school.edusathi.in/$filePath';
-
-  try {
-    final response = await http.get(Uri.parse(fullUrl));
-    if (response.statusCode == 200) {
-      final directory = await getExternalStorageDirectory(); 
-      final fileName = filePath.split('/').last;
-      final file = File('${directory!.path}/$fileName');
-      await file.writeAsBytes(response.bodyBytes);
-
+  Future<void> downloadFile(BuildContext context, String filePath) async {
+    if (Platform.isAndroid &&
+        await Permission.manageExternalStorage.request().isDenied) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Downloaded to ${file.path}")),
+        const SnackBar(content: Text("Storage permission is required")),
       );
-
-      await OpenFile.open(file.path);
-    } else {
-      throw Exception('Download failed');
+      return;
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Download error: $e")),
-    );
+
+    final fullUrl = 'https://school.edusathi.in/$filePath';
+
+    try {
+      final response = await http.get(Uri.parse(fullUrl));
+      if (response.statusCode == 200) {
+        final directory = await getExternalStorageDirectory();
+        final fileName = filePath.split('/').last;
+        final file = File('${directory!.path}/$fileName');
+        await file.writeAsBytes(response.bodyBytes);
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Downloaded to ${file.path}")));
+
+        await OpenFile.open(file.path);
+      } else {
+        throw Exception('Download failed');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Download error: $e")));
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {

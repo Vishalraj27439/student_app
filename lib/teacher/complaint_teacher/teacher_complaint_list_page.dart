@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:student_app/teacher/complaint_teacher/teacher_add_complaint_page.dart';
-import 'package:student_app/teacher/complaint_teacher/teacher_complaint_history_page.dart';
 
-// import 'teacher_complaint_history_page.dart';
+import 'package:student_app/teacher/complaint_teacher/teacher_complaint_details.dart';
 
 class TeacherComplaintListPage extends StatefulWidget {
   const TeacherComplaintListPage({super.key});
@@ -32,6 +30,7 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
+    print("Token: $token");
 
     final response = await http.post(
       Uri.parse(apiUrl),
@@ -62,22 +61,26 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
     return status == 1 ? 'Solved' : 'Pending';
   }
 
-  String formatDate(String dateStr) {
-    try {
-      final date = DateTime.parse(dateStr);
-      return DateFormat('dd-MM-yyyy').format(date);
-    } catch (e) {
-      return dateStr;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Complaints', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Student Complaints',
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Colors.deepPurple,
-        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
+        // leading: IconButton(
+        //   icon: const Icon(Icons.arrow_back, color: Colors.white),
+        //   onPressed: () {
+        //     Navigator.pushReplacement(
+        //       context,
+        //       MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        //     );
+        //   },
+        // ),
       ),
       body: isLoading
           ? const Center(
@@ -90,19 +93,20 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
               padding: const EdgeInsets.all(12),
               itemBuilder: (context, index) {
                 final complaint = complaints[index];
+                final status = complaint['Status'];
 
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>TeacherComplaintHistoryPage(
-  complaintId: (complaint['ComplaintId'] ?? 0) as int,
-  date: (complaint['Date'] ?? '') as String,
-  description: (complaint['Description'] ?? '') as String,
-  status: (complaint['Status'] ?? 0) as int,
-)
-
+                        builder: (_) => TeacherComplaintDetailPage(
+                          complaintId: complaint['id'],
+                          date: complaint['Date'],
+                          description: complaint['Description'],
+                          status: status,
+                          studentName: complaint['StudentName'],
+                        ),
                       ),
                     );
                   },
@@ -138,17 +142,17 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: getStatusColor(
-                                    complaint['Status'],
+                                    status,
                                   ).withOpacity(0.1),
                                   border: Border.all(
-                                    color: getStatusColor(complaint['Status']),
+                                    color: getStatusColor(status),
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  getStatusText(complaint['Status']),
+                                  getStatusText(status),
                                   style: TextStyle(
-                                    color: getStatusColor(complaint['Status']),
+                                    color: getStatusColor(status),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -171,19 +175,15 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => TeacherAddComplaintPage()),
-          );
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('FAB pressed')));
-        },
-        backgroundColor: Colors.deepPurple,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
+  }
+}
+
+String formatDate(String dateStr) {
+  try {
+    final date = DateTime.parse(dateStr);
+    return DateFormat('dd-MM-yyyy').format(date);
+  } catch (e) {
+    return dateStr;
   }
 }

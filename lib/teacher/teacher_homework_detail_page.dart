@@ -70,72 +70,73 @@ class TeacherHomeworkDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(homework['HomeworkTitle'] ?? 'Homework Detail'),
+        title: const Text(
+          "Homework Details",
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  homework['HomeworkTitle'] ?? 'Untitled',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("📅 Work Date: ${formatDate(homework['WorkDate'])}"),
-                    const SizedBox(height: 4),
-                    Text(
-                      "🕒 Submission: ${formatDate(homework['SubmissionDate'])}",
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: 12),
-                const Text(
-                  "📝 Remark:",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                homework['HomeworkTitle'] ?? 'Untitled',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
                 ),
-                const SizedBox(height: 6),
-                Text(homework['Remark'] ?? 'No remarks provided'),
-                const SizedBox(height: 20),
-                if (attachment != null)
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
-                      ),
-                      onPressed: () async {
-                        await requestStoragePermission();
-                        final fileUrl =
-                            'https://school.edusathi.in/$attachment';
-                        await downloadFile(context, fileUrl, fileName!);
-                      },
-                      icon: const Icon(Icons.download, color: Colors.white),
-                      label: const Text(
-                        "Download Attachment",
-                        style: TextStyle(color: Colors.white),
-                      ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Assignment: ${formatDate(homework['WorkDate'])}",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  Text(
+                    "Submission: ${formatDate(homework['SubmissionDate'])}",
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 12),
+              const Text(
+                "📝 Remark:",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              Text(homework['Remark'] ?? 'No remarks provided'),
+              const SizedBox(height: 20),
+              if (attachment != null)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                    ),
+                    onPressed: () async {
+                      await requestStoragePermission();
+                      final fileUrl = 'https://school.edusathi.in/$attachment';
+                      await downloadFile(context, fileUrl, fileName!);
+                    },
+                    icon: const Icon(Icons.download, color: Colors.white),
+                    label: const Text(
+                      "Download Attachment",
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),

@@ -24,6 +24,7 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
   String className = '';
   String section = '';
   String photo = '';
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -62,9 +63,14 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         contact = data['ContactNo'].toString();
         qualification = data['EmpQualification'] ?? '';
         address = data['Address'] ?? '';
+        isLoading = false;
       });
     } else {
       print("❌ Error loading teacher profile: ${response.statusCode}");
+
+      setState(() {
+        setState(() => isLoading = false);
+      });
     }
   }
 
@@ -79,88 +85,94 @@ class _TeacherProfilePageState extends State<TeacherProfilePage> {
         backgroundColor: Colors.deepPurple,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 45,
-                      backgroundImage: photo.isNotEmpty
-                          ? NetworkImage(photo)
-                          : const AssetImage('assets/images/logo_new.png')
-                                as ImageProvider,
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                          CircleAvatar(
+                            radius: 45,
+                            backgroundImage: photo.isNotEmpty
+                                ? NetworkImage(photo)
+                                : const AssetImage('assets/images/logo_new.png')
+                                      as ImageProvider,
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text("Class Teacher"),
+                                Text(" $className - $section"),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 5),
-                          Text("Class Teacher"),
-                          Text(" $className - $section"),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const Divider(height: 30, thickness: 1),
+                      const Divider(height: 30, thickness: 1),
 
-                buildInfoRow(Icons.badge, "Employee ID", employeeId),
-                buildInfoRow(
-                  Icons.person_outline,
-                  "Relative Name",
-                  relativeName,
-                ),
-                buildInfoRow(Icons.male, "Gender", gender),
-                buildInfoRow(Icons.phone, "Contact No.", contact),
-                buildInfoRow(Icons.cake, "Date of Birth", dob),
-                buildInfoRow(Icons.calendar_month, "Joining Date", doj),
-                buildInfoRow(Icons.school, "Qualification", qualification),
-                buildInfoRow(Icons.location_on, "Address", address),
-
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ChangePasswordPage(),
+                      buildInfoRow(Icons.badge, "Employee ID", employeeId),
+                      buildInfoRow(
+                        Icons.person_outline,
+                        "Relative Name",
+                        relativeName,
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.lock, color: Colors.white),
-                  label: const Text(
-                    "Change Password",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                      buildInfoRow(Icons.male, "Gender", gender),
+                      buildInfoRow(Icons.phone, "Contact No.", contact),
+                      buildInfoRow(Icons.cake, "Date of Birth", dob),
+                      buildInfoRow(Icons.calendar_month, "Joining Date", doj),
+                      buildInfoRow(
+                        Icons.school,
+                        "Qualification",
+                        qualification,
+                      ),
+                      buildInfoRow(Icons.location_on, "Address", address),
+
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ChangePasswordPage(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.lock, color: Colors.white),
+                        label: const Text(
+                          "Change Password",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 

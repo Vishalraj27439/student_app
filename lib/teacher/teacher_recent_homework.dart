@@ -15,7 +15,7 @@ class TeacherRecentHomeworks extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final limitedHomeworks = homeworks.take(3).toList();
+    final limitedHomeworks = homeworks.take(5).toList();
     print("📦 Received homeworks in widget: $homeworks");
 
     return Container(
@@ -67,7 +67,10 @@ class TeacherRecentHomeworks extends StatelessWidget {
                     return ListTile(
                       leading: const Icon(Icons.book, color: Colors.deepPurple),
                       title: Text(hw['HomeworkTitle'] ?? ''),
-                      subtitle: Text("Submission: ${hw['SubmissionDate']}"),
+                      subtitle: Text(
+  "Submission: ${formatDate(hw['SubmissionDate'])}",
+),
+
                       trailing: hw['Attachment'] != null
                           ? IconButton(
                               icon: const Icon(
@@ -144,5 +147,14 @@ class TeacherRecentHomeworks extends StatelessWidget {
         context,
       ).showSnackBar(const SnackBar(content: Text("❌ Download failed")));
     }
+  }
+}
+String formatDate(String? date) {
+  if (date == null || date.isEmpty) return "";
+  try {
+    final parsedDate = DateTime.parse(date);
+    return "${parsedDate.day.toString().padLeft(2, '0')}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.year}";
+  } catch (_) {
+    return date;
   }
 }
