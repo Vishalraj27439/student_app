@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/dashboard/attendance_pie_chart.dart';
-import 'package:student_app/dashboard/attendance_screen.dart';
+import 'package:student_app/teacher/Attendance_UI/attendance_screen.dart';
 import 'package:student_app/homework/homework_model.dart';
 import 'package:student_app/homework/homework_page.dart';
 import 'package:student_app/dashboard/timetable_page.dart';

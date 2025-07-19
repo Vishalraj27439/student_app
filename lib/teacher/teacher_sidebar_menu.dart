@@ -15,7 +15,7 @@ import 'package:student_app/teacher/teacher_attendance_screen.dart';
 import 'package:student_app/teacher/teacher_dashboard_screen.dart';
 import 'package:student_app/teacher/teacher_homework_page.dart';
 import 'package:student_app/teacher/teacher_profile_page.dart';
-import 'package:student_app/dashboard/attendance_screen.dart';
+import 'package:student_app/teacher/Attendance_UI/attendance_screen.dart';
 // import 'package:student_app/complaint/view_complaints_page.dart';
 import 'package:student_app/teacher/teacher_timetable.dart';
 
@@ -119,20 +119,30 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             );
           }),
 
+          sidebarItem(
+            context,
+            Icons.playlist_add_check_circle_outlined,
+            'Mark Attendance',
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => MarkAttendancePage()),
+              );
+            },
+          ),
+
+          sidebarItem(context, Icons.add_chart_outlined, 'Attendance Report', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AttendanceScreen()),
+            );
+          }),
           sidebarItem(context, Icons.book, 'Homeworks', () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => TeacherHomeworkPage()),
             );
           }),
-
-          sidebarItem(context, Icons.calendar_month, 'Student Attendance', () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AttendanceScreen()),
-            );
-          }),
-
           sidebarItem(context, Icons.schedule, 'Timetable', () {
             Navigator.push(
               context,
@@ -144,13 +154,6 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => TeacherComplaintListPage()),
-            );
-          }),
-
-          sidebarItem(context, Icons.report, 'tESTING', () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => MarkAttendancePage()),
             );
           }),
 

@@ -106,6 +106,7 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
     } catch (e) {
+       print("🔴 Login Exception: $e");
       setState(() {
         _errorMessage = 'Something went wrong. Please try again later.';
       });
@@ -128,13 +129,16 @@ class _LoginPageState extends State<LoginPage> {
 
     final response = await http.post(
       Uri.parse('https://school.edusathi.in/api/save_token'),
+      
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: jsonEncode({'fcm_token': fcmToken}),
-    );
+    );print("🔵 Status Code: ${response.statusCode}");
+print("📦 Response Body: ${response.body}");
+
 
     if (response.statusCode == 200) {
       print('✅ FCM token saved successfully');

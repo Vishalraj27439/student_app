@@ -121,6 +121,16 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            "${complaint['StudentName'] ?? 'N/A'}",
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
                           Row(
                             children: [
                               const Icon(
@@ -160,6 +170,7 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
                             ],
                           ),
                           const SizedBox(height: 12),
+
                           Text(
                             complaint['Description']?.replaceAll(
                                   r"\r\n",
