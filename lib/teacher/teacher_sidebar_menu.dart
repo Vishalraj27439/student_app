@@ -2,16 +2,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:student_app/login_page.dart';
-// import 'package:student_app/teacher/teacher_dashboard_screen.dart';
 
-// import 'package:student_app/payment/payment_page.dart';
+import 'package:student_app/login_page.dart';
 import 'package:student_app/payment/payment_teacher_screen.dart';
 import 'package:student_app/school_info_page.dart';
+import 'package:student_app/teacher/AssignMarksPage.dart';
+
+import 'package:student_app/teacher/AssignSkillsPage.dart';
+import 'package:student_app/teacher/ResultcardPage.dart';
 import 'package:student_app/teacher/Attendance_UI/mark_attendance_page.dart';
 import 'package:student_app/teacher/complaint_teacher/teacher_complaint_list_page.dart';
 // import 'package:student_app/teacher/complaint_teacher/teacher_view_complaint_page.dart';
-import 'package:student_app/teacher/teacher_attendance_screen.dart';
+import 'package:student_app/teacher/Attendance_UI/teacher_attendance_screen.dart';
 import 'package:student_app/teacher/teacher_dashboard_screen.dart';
 import 'package:student_app/teacher/teacher_homework_page.dart';
 import 'package:student_app/teacher/teacher_profile_page.dart';
@@ -131,16 +133,39 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             },
           ),
 
-          sidebarItem(context, Icons.add_chart_outlined, 'Attendance Report', () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AttendanceScreen()),
-            );
-          }),
+          sidebarItem(
+            context,
+            Icons.add_chart_outlined,
+            'Attendance Report',
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AttendanceScreen()),
+              );
+            },
+          ),
           sidebarItem(context, Icons.book, 'Homeworks', () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => TeacherHomeworkPage()),
+            );
+          }),
+          sidebarItem(context, Icons.assignment, 'Assign Marks', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => AssignMarksPage()),
+            );
+          }),
+          sidebarItem(context, Icons.star_rate, 'Assign Skills', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => AssignSkillsPage()),
+            );
+          }),
+          sidebarItem(context, Icons.list_alt, 'Result ', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ResultCardPage()),
             );
           }),
           sidebarItem(context, Icons.schedule, 'Timetable', () {
@@ -248,8 +273,14 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
     BuildContext context,
     IconData icon,
     String title,
+
     VoidCallback onTap,
   ) {
-    return ListTile(leading: Icon(icon), title: Text(title), onTap: onTap);
+    return ListTile(
+      leading: Icon(icon),
+      visualDensity: VisualDensity(vertical: -4),
+      title: Text(title),
+      onTap: onTap,
+    );
   }
 }

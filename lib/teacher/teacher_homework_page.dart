@@ -141,6 +141,7 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
                               color: Colors.deepPurple,
                             ),
                           ),
+
                           const SizedBox(height: 6),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -149,12 +150,34 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
                                 "📅 ${formatDate(hw['WorkDate'])}",
                                 style: const TextStyle(fontSize: 13),
                               ),
+
                               Text(
                                 "Submission: ${formatDate(hw['SubmissionDate'])}",
                                 style: const TextStyle(fontSize: 13),
                               ),
                             ],
                           ),
+                          SizedBox(height: 3),
+                          RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                color: Colors.deepPurple,
+                                fontSize: 14,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: "Class:",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                TextSpan(
+                                  text:
+                                      " ${hw['Class'] ?? ''} (${hw['Section'] ?? ''})",
+                                  style: TextStyle(color: Colors.deepPurple),
+                                ),
+                              ],
+                            ),
+                          ),
+
                           const SizedBox(height: 6),
                           if ((hw['Remark'] ?? '').isNotEmpty)
                             Text(
@@ -192,7 +215,7 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
 
           if (result == true) {
             // Trigger refresh of homework list
-            fetchHomeworks(); 
+            fetchHomeworks();
           }
         },
       ),

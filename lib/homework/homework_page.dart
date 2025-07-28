@@ -124,16 +124,7 @@ class _HomeworkPageState extends State<HomeworkPage> {
           ? const Center(child: CircularProgressIndicator())
           : homeworks.isEmpty
           ? const Center(child: Text("No homework available"))
-          : ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: homeworks.length,
-              itemBuilder: (context, index) {
-                final hw = homeworks[index];
-                final attachmentUrl = hw['Attachment'];
-                final fileName = (attachmentUrl != null)
-                    ? attachmentUrl.split('/').last
-                    : "";
-
+         
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(

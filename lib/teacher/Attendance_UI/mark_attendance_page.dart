@@ -331,7 +331,9 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
 
                   // final status = student['Status'];
 
-                  return Card(
+                  return Card( color: (student['Status'] == null || student['Status'] == 'not_marked')
+      ? Colors.grey.shade200
+      : Colors.white,
                     margin: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,

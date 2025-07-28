@@ -44,14 +44,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     initData();
   }
 
-  Future<void> initData() async {
-    await loadProfileData();
-    await fetchDashboardData();
-    setState(() {
-      isLoading = false;
-    });
-  }
-
+ 
   Future<void> loadProfileData() async {
     final prefs = await SharedPreferences.getInstance();
     studentName = prefs.getString('student_name') ?? '';
@@ -504,17 +497,3 @@ class LeftSidebarMenu extends StatelessWidget {
   }
 }
 
-Widget sidebarTile({
-  required IconData icon,
-  required String title,
-  required VoidCallback onTap,
-}) {
-  return ListTile(
-    contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 0),
-    visualDensity: VisualDensity(vertical: -2),
-
-    leading: Icon(icon),
-    title: Text(title),
-    onTap: onTap,
-  );
-}
