@@ -211,7 +211,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 crossAxisSpacing: 6,
                 childAspectRatio: 1.0,
               ),
-             
+             itemBuilder: (context, idx) {
+                if (idx < startWeekday) return const SizedBox();
+                final day = idx - startWeekday + 1;
+                final date = DateTime(year, month, day);
+                final dateStr = DateFormat('yyyy-MM-dd').format(date);
+
+                final status = _statusMap[dateStr] ?? 0;
+                final dotColor = status > 0 ? Colors.green : Colors.grey;
+                final isSelected = _selectedDate == dateStr;
+                return GestureDetector(
+                  onTap: () {
+                    if (status > 0) {
+                      _fetchAttendance(selectedDate: dateStr);
+                    }
+                  },
                   child: Container(
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.green.shade50 : Colors.white,

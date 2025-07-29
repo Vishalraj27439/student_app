@@ -93,7 +93,22 @@ print("🪪 Token being used: $token");
 
     print(response.body);
 
-    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print("📦 Decoded Data:");
+      print(data);
+
+      setState(() {
+        students = data['students'] ?? 0;
+        complaints = data['complaints'] ?? 0;
+        payments = int.tryParse(data['payments'].toString()) ?? 0;
+        attendance = {
+          'present': data['attendances']?['present'] ?? 0,
+          'absent': data['attendances']?['absent'] ?? 0,
+          'leave': data['attendances']?['leave'] ?? 0,
+          'half_day': data['attendances']?['half_day'] ?? 0,
+          'working_days': data['attendances']?['working_days'] ?? 0,
+        };
         // homeworks = List<Map<String, dynamic>>.from(data['homeworks'] ?? []);
         // print("📚 Homeworks from API: ${data['homeworks']}");
 

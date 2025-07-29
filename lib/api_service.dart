@@ -17,9 +17,25 @@ class ApiService {
     );
   }
 
- 
+  /// Unified POST request
+  static Future<http.Response> post(
+    String endpoint, {
+    Map<String, dynamic>? body,
+  }) async {
+    final token = await _getToken();
+    final url = Uri.parse('$_baseUrl$endpoint');
 
-  
+    return http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body ?? {}),
+    );
+  }
+
   static Future<String> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token') ?? '';

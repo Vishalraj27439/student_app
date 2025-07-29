@@ -143,7 +143,16 @@ class _AssignSkillsPageState extends State<AssignSkillsPage> {
           );
         }
 
-        
+        studentList = List<Map<String, dynamic>>.from(data['skills']).map((s) {
+          return {
+            "studentid": s['id'],
+            "name": s['StudentName'],
+            "father": s['FatherName'],
+            "roll": s['RollNo'],
+            "status": s['Status'],
+            "Grade": s['Grade'],
+          };
+        }).toList();
 
         filteredList = List.from(studentList);
         // 💡 Create and sync controllers
