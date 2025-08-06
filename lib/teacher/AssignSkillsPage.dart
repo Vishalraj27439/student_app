@@ -294,262 +294,207 @@ class _AssignSkillsPageState extends State<AssignSkillsPage> {
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
+          : ListView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              children: [
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 3,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: selectedExam,
+                          decoration: InputDecoration(
+                            labelText: 'Select Exam',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: examList.map((exam) {
+                            if (examList.isNotEmpty)
+                              selectedExam ??= examList.first['ExamId']
+                                  .toString();
+                            return DropdownMenuItem(
+                              value: exam['ExamId'].toString(),
+                              child: Text(exam['Exam']),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              selectedExam = value;
+                            });
+                          },
+                        ),
+                        SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          value: selectedSkill,
+                          decoration: InputDecoration(
+                            labelText: 'Select Skill',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: skills
+                              .map(
+                                (skill) => DropdownMenuItem(
+                                  value: skill['SkillId'].toString(),
+                                  child: Text(skill['Skill']),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (val) =>
+                              setState(() => selectedSkill = val),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: selectedSkill == null
+                                ? null
+                                : _fetchStudents,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                            ),
+                            child: const Text(
+                              'Search',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    elevation: 3,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                  ),
+                ),
+                if (showTable) ...[
+                  TextField(
+                    controller: searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Search by name or roll',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (query) {
+                      setState(() {
+                        filteredList = studentList.where((s) {
+                          final name = s['name'].toLowerCase();
+                          final roll = s['roll'].toString();
+                          return name.contains(query.toLowerCase()) ||
+                              roll.contains(query);
+                        }).toList();
+                      });
+                    },
+                  ),
+                  SizedBox(height: 12),
+                  ...filteredList.map((student) {
+                    final isMarked =
+                        (student['Grade']?.toString().trim().isNotEmpty ??
+                        false);
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: isMarked
+                            ? Colors.green.shade50
+                            : Colors.red.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isMarked ? Colors.green : Colors.red,
+                          width: 1.2,
+                        ),
+                      ),
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          DropdownButtonFormField<String>(
-                            value: selectedExam,
-                            decoration: InputDecoration(
-                              labelText: 'Select Exam',
-                              border: OutlineInputBorder(),
+                          Text(
+                            'Roll No: ${student['roll']}  |  ${student['name']}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
-                            items: examList.map((exam) {
-                              if (examList.isNotEmpty)
-                                selectedExam ??= examList.first['ExamId']
-                                    .toString();
-
-                              return DropdownMenuItem(
-                                value: exam['ExamId'].toString(),
-                                child: Text(exam['Exam']),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedExam = value;
-                              });
-                            },
                           ),
-                          SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            value: selectedSkill,
-                            decoration: InputDecoration(
-                              labelText: 'Select Skill',
-                              border: OutlineInputBorder(),
+                          Text(
+                            'Father: ${student['father']}',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            items: skills
-                                .map(
-                                  (skill) => DropdownMenuItem(
-                                    value: skill['SkillId'].toString(),
-                                    child: Text(skill['Skill']),
+                            maxLines: 1,
+                          ),
+                          SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Text('Grade:'),
+                              SizedBox(width: 8),
+                              SizedBox(
+                                width: 80,
+                                child: TextField(
+                                  controller:
+                                      gradeControllers[student['studentid']
+                                          .toString()],
+                                  decoration: InputDecoration(
+                                    hintText: 'Grade',
+                                    border: OutlineInputBorder(),
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
                                   ),
-                                )
-                                .toList(),
-                            onChanged: (val) =>
-                                setState(() => selectedSkill = val),
-                          ),
+                                  onChanged: (val) {
+                                    final grade = val.trim().toUpperCase();
+                                    student['Grade'] = grade;
+                                    student['status'] = grade.isNotEmpty
+                                        ? 'Marked'
+                                        : 'Not Marked';
 
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: ElevatedButton(
-                              onPressed: selectedSkill == null
-                                  ? null
-                                  : _fetchStudents,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
+                                    final idx = studentList.indexWhere(
+                                      (s) =>
+                                          s['studentid'] ==
+                                          student['studentid'],
+                                    );
+
+                                    if (idx != -1) {
+                                      studentList[idx]['Grade'] = val;
+                                      studentList[idx]['status'] =
+                                          student['status'];
+                                    }
+                                    setState(() {});
+                                  },
+                                ),
                               ),
-                              child: const Text(
-                                'Search',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
+                            ],
                           ),
                         ],
                       ),
-                    ),
-                  ),
-
-                  if (showTable) ...[
-                    SizedBox(height: 12),
-                    TextField(
-                      controller: searchController,
-                      decoration: const InputDecoration(
-                        hintText: 'Search by name or roll',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (query) {
-                        setState(() {
-                          filteredList = studentList.where((s) {
-                            final name = s['name'].toLowerCase();
-                            final roll = s['roll'].toString();
-                            return name.contains(query.toLowerCase()) ||
-                                roll.contains(query);
-                          }).toList();
-                        });
-                      },
-                    ),
-                    SizedBox(height: 12),
-
-                    Expanded(
-                      child: filteredList.isEmpty
-                          ? const Center(
-                              child: Text('No students found for this skill.'),
-                            )
-                          : ListView.builder(
-                              itemCount: filteredList.length + 1,
-                              itemBuilder: (context, index) {
-                                if (index == filteredList.length) {
-                                  // ✅ Show submit button after all student cards
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    child: isSubmitting
-                                        ? const Center(
-                                            child: CircularProgressIndicator(),
-                                          )
-                                        : SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              onPressed: _submitSkills,
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    Colors.deepPurple,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 14,
-                                                    ),
-                                              ),
-                                              child: const Text(
-                                                'Submit Skills',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                  );
-                                }
-
-                                final student = filteredList[index];
-                                final isMarked =
-                                    (student['Grade']
-                                        ?.toString()
-                                        .trim()
-                                        .isNotEmpty ??
-                                    false);
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    color: isMarked
-                                        ? Colors.green.shade50
-                                        : Colors.red.shade100,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isMarked
-                                          ? Colors.green
-                                          : Colors.red,
-
-                                      width: 1.2,
-                                    ),
-                                  ),
-                                  margin: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Roll No: ${student['roll']}  |  ${student['name']}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Father: ${student['father']}',
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          maxLines: 1,
-                                        ),
-                                        SizedBox(height: 6),
-                                        Row(
-                                          children: [
-                                            const Text('Grade:'),
-                                            SizedBox(width: 8),
-                                            SizedBox(
-                                              width: 80,
-                                              child: TextField(
-                                                controller:
-                                                    gradeControllers[student['studentid']
-                                                        .toString()],
-                                                decoration: InputDecoration(
-                                                  hintText: 'Grade',
-                                                  border: OutlineInputBorder(),
-                                                  isDense: true,
-                                                  contentPadding:
-                                                      EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 8,
-                                                      ),
-                                                ),
-                                                onChanged: (val) {
-                                                  final grade = val
-                                                      .trim()
-                                                      .toUpperCase();
-                                                  student['Grade'] = grade;
-
-                                                
-                                                  
-                                                  student['status'] =
-                                                      grade.isNotEmpty
-                                                      ? 'Marked'
-                                                      : 'Not Marked';
-                                                  if (val.trim().isNotEmpty &&
-                                                      student['status'] ==
-                                                          'present') {
-                                                    student['status'] =
-                                                        'Marked';
-                                                  } else {
-                                                    student['status'] =
-                                                        'Not Marked';
-                                                  }
-                                                  final idx = studentList
-                                                      .indexWhere(
-                                                        (s) =>
-                                                            s['studentid'] ==
-                                                            student['studentid'],
-                                                      );
-
-                                                  if (idx != -1) {
-                                                    studentList[idx]['Grade'] =
-                                                        val;
-                                                    studentList[idx]['status'] =
-                                                        student['status'];
-                                                  }
-                                                  setState(() {});
-                                                },
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
+                    );
+                  }).toList(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: isSubmitting
+                        ? const Center(child: CircularProgressIndicator())
+                        : SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _submitSkills,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurple,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                              child: const Text(
+                                'Submit Skills',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
-                    ),
-                  ],
+                          ),
+                  ),
                 ],
-              ),
+              ],
             ),
     );
   }

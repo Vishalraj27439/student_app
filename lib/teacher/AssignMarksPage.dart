@@ -317,23 +317,6 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
       );
     }
   }
-
-  // void updateTotalMarkFieldFromLoadedData() {
-  //   if (students.isEmpty) return;
-
-  //   final firstMark = students.first['TotalMark']?.toString();
-
-  //   final allSame = students.every(
-  //     (s) => s['TotalMark']?.toString() == firstMark,
-  //   );
-
-  //   if (allSame && firstMark != null && firstMark.isNotEmpty) {
-  //     totalMarkController.text = firstMark!;
-  //   } else {
-  //     totalMarkController.text = ''; // Or 'Mixed'
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
