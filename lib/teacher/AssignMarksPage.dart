@@ -20,7 +20,8 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
   bool isLoading = false;
   String? message;
   String searchQuery = '';
-  String globalTotal = '';
+  final TextEditingController totalMarkController = TextEditingController();
+
   final ScrollController _scrollController = ScrollController();
   bool isSubmitting = false;
   Map<int, TextEditingController> obtainControllers = {};
@@ -30,6 +31,15 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
     super.initState();
     fetchExams();
     fetchSubjects();
+  }
+
+  @override
+  void dispose() {
+    for (var controller in obtainControllers.values) {
+      controller.dispose();
+    }
+    totalMarkController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchExams() async {
@@ -129,9 +139,14 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
           obtainControllers[id] = TextEditingController(
             text: s['GetMark']?.toString() ?? '',
           );
+          if (students.isNotEmpty) {
+  final totalMark = students.first['TotalMark']?.toString() ?? '';
+  totalMarkController.text = totalMark;
+}
         }
         setState(() {
           filteredStudents = List.from(students);
+          // updateTotalMarkFieldFromLoadedData();
           isLoading = false;
         });
       } else {
@@ -302,6 +317,22 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
       );
     }
   }
+
+  // void updateTotalMarkFieldFromLoadedData() {
+  //   if (students.isEmpty) return;
+
+  //   final firstMark = students.first['TotalMark']?.toString();
+
+  //   final allSame = students.every(
+  //     (s) => s['TotalMark']?.toString() == firstMark,
+  //   );
+
+  //   if (allSame && firstMark != null && firstMark.isNotEmpty) {
+  //     totalMarkController.text = firstMark!;
+  //   } else {
+  //     totalMarkController.text = ''; // Or 'Mixed'
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -559,6 +590,7 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
                               width: 100,
                               height: 40,
                               child: TextField(
+                                controller: totalMarkController,
                                 decoration: const InputDecoration(
                                   labelText: "Total Marks",
                                   border: OutlineInputBorder(),
@@ -568,7 +600,7 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
                                   ),
                                 ),
                                 keyboardType: TextInputType.number,
-                               
+
                                 onChanged: (val) {
                                   setState(() {
                                     for (var s in students) {
