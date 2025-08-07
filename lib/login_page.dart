@@ -11,17 +11,14 @@ class LoginPage extends StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
-
 class _LoginPageState extends State<LoginPage> {
   String baseUrl = "https://school.edusathi.in/api";
   final TextEditingController idController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
   bool _obscureText = true;
   bool _isLoading = false;
   String _errorMessage = '';
-
-  String selectedRole = 'Student'; // Default login role
+  String selectedRole = 'Student'; 
 
   void _login() async {
     setState(() {

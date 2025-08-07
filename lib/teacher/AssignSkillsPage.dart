@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:student_app/api_service.dart';
 
 class AssignSkillsPage extends StatefulWidget {
   const AssignSkillsPage({super.key});
@@ -31,241 +30,83 @@ class _AssignSkillsPageState extends State<AssignSkillsPage> {
     fetchSkills();
   }
 
-  Future<void> fetchExams() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://school.edusathi.in/api/get_exam'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token.isNotEmpty) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({}),
-      );
-
-      print("📘 Exam API Response: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonResponse = jsonDecode(response.body);
-        setState(() {
-          examList = List<Map<String, dynamic>>.from(jsonResponse);
-        });
-      } else {
-        print("❌ Exam API failed: ${response.statusCode}");
-      }
-    } catch (e) {
-      print("❌ Error fetching exams: $e");
+ Future<void> fetchExams() async {
+  try {
+    final response = await ApiService.post('/get_exam', body: {});
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonResponse = jsonDecode(response.body);
+      setState(() {
+        examList = List<Map<String, dynamic>>.from(jsonResponse);
+      });
+    } else {
+      print("❌ Exam API failed: ${response.statusCode}");
     }
+  } catch (e) {
+    print("❌ Error fetching exams: $e");
   }
+}
 
-  Future<void> fetchSkills() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
-
-    print("🔹 Fetching Skills...");
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://school.edusathi.in/api/get_skill'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token.isNotEmpty) 'Authorization': 'Bearer $token',
-        },
-      );
-
-      print("📥 Skill API Response Code: ${response.statusCode}");
-      print("📥 Skill API Response Body: ${response.body}");
-
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonResponse = jsonDecode(response.body);
-        print("✅ Decoded Skills: $jsonResponse");
-
-        setState(() {
-          skills = List<Map<String, dynamic>>.from(jsonResponse);
-          print("📦 Skills Loaded into State: $skills");
-        });
-      } else {
-        print(
-          "❌ Failed to fetch skills: ${response.statusCode}, ${response.body}",
-        );
-      }
-    } catch (e) {
-      print("❌ Error fetching skills: $e");
+ Future<void> fetchSkills() async {
+  try {
+    final response = await ApiService.post('/get_skill');
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonResponse = jsonDecode(response.body);
+      setState(() {
+        skills = List<Map<String, dynamic>>.from(jsonResponse);
+      });
+    } else {
+      print("❌ Failed to fetch skills: ${response.statusCode}");
     }
+  } catch (e) {
+    print("❌ Error fetching skills: $e");
   }
+}
 
-  Future<void> _fetchStudents() async {
-    print("🔹 Starting student fetch...");
+ Future<void> _fetchStudents() async {
+  setState(() {
+    isLoading = true;
+    showTable = false;
+  });
 
-    setState(() {
-      isLoading = true;
-      showTable = false;
+  try {
+    final resp = await ApiService.post('/teacher/skill', body: {
+      "ExamId": int.parse(selectedExam ?? "0"),
+      "SkillId": int.parse(selectedSkill!),
     });
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token') ?? '';
+    final data = jsonDecode(resp.body);
+    gradeControllers.clear();
+    if (data['skills'] != null) {
+      studentList = List<Map<String, dynamic>>.from(data['skills']).map((s) {
+        return {
+          "studentid": s['id'],
+          "name": s['StudentName'],
+          "father": s['FatherName'],
+          "roll": s['RollNo'],
+          "status": s['Status'],
+          "Grade": s['Grade'],
+        };
+      }).toList();
 
-      final keys = prefs.getKeys();
-      print("🧾 SharedPreferences keys: $keys");
-
-      print("📤 Sending POST to Student Skill API...");
-
-      print("➡️ SkillId: $selectedSkill");
-
-      final resp = await http.post(
-        Uri.parse('https://school.edusathi.in/api/teacher/skill'),
-        headers: {
-          "Content-Type": "application/json",
-          if (token.isNotEmpty) "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({
-          "ExamId": int.parse(selectedExam ?? "0"),
-          "SkillId": int.parse(selectedSkill!),
-        }),
-      );
-      print("➡️ ExamId: $selectedExam");
-
-      print("📥 Student Skill API Response Code: ${resp.statusCode}");
-      print("📥 Response Body: ${resp.body}");
-
-      final data = jsonDecode(resp.body);
-      print("✅ Decoded JSON: $data");
-      gradeControllers.clear();
-      if (data['skills'] != null) {
-        print("📋 Fetched Students with Grades:");
-
-        for (var s in data['skills']) {
-          print(
-            "➡️ ${s['StudentName']} (Roll: ${s['RollNo']}), Grade: ${s['Grade']}, Status: ${s['Status']}",
-          );
-        }
-
-        studentList = List<Map<String, dynamic>>.from(data['skills']).map((s) {
-          return {
-            "studentid": s['id'],
-            "name": s['StudentName'],
-            "father": s['FatherName'],
-            "roll": s['RollNo'],
-            "status": s['Status'],
-            "Grade": s['Grade'],
-          };
-        }).toList();
-
-        filteredList = List.from(studentList);
-        // 💡 Create and sync controllers
-        for (var student in filteredList) {
-          final id = student['studentid'].toString();
-
-          if (!gradeControllers.containsKey(id)) {
-            gradeControllers[id] = TextEditingController(
-              text: student['Grade'] ?? '',
-            );
-          } else {
-            if (gradeControllers[id]!.text != (student['Grade'] ?? '')) {
-              gradeControllers[id]!.text = student['Grade'] ?? '';
-              gradeControllers[id]!.selection = TextSelection.fromPosition(
-                TextPosition(offset: gradeControllers[id]!.text.length),
-              );
-            }
-          }
-        }
-
-        setState(() {
-          showTable = true;
-          print("📊 Student List Ready. Count: ${studentList.length}");
-        });
-      } else {
-        print("⚠️ No 'skills' data found in response.");
-      }
-
-      if (data['msg'] != null && data['msg'].toString().trim().isNotEmpty) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Notice'),
-            content: Text(data['msg']),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
+      filteredList = List.from(studentList);
+      for (var student in filteredList) {
+        final id = student['studentid'].toString();
+        gradeControllers[id] ??= TextEditingController(
+          text: student['Grade'] ?? '',
         );
       }
-    } catch (e) {
-      print("❌ Error fetching student skill data: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
-    } finally {
-      setState(() => isLoading = false);
-      print("⏹️ Loading stopped.");
+
+      setState(() {
+        showTable = true;
+      });
     }
-  }
 
-  Future<void> _submitSkills() async {
-    setState(() => isSubmitting = true);
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
-
-    try {
-      // ✅ Validate first — stop if any Grade is empty
-      final hasEmptyGrade = studentList.any(
-        (student) =>
-            student['Grade'] == null ||
-            student['Grade'].toString().trim().isEmpty,
-      );
-
-      if (hasEmptyGrade) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("Validation Error"),
-            content: const Text(
-              "Please enter Grade for all students before submitting.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("OK"),
-              ),
-            ],
-          ),
-        );
-        setState(() => isSubmitting = false); // reset loading
-        return; // ❌ STOP here, don’t submit
-      }
-
-      // ✅ Now safe to prepare and send request
-      final List<Map<String, dynamic>> skillEntries = studentList
-          .map((s) => {"StudentId": s['studentid'], "Grade": s['Grade'] ?? ''})
-          .toList();
-
-      final response = await http.post(
-        Uri.parse("https://school.edusathi.in/api/teacher/skill/store"),
-        headers: {
-          "Content-Type": "application/json",
-          if (token.isNotEmpty) "Authorization": "Bearer $token",
-        },
-        body: jsonEncode({
-          "ExamId": int.parse(selectedExam ?? "0"),
-          "SkillId": int.parse(selectedSkill!),
-          "skills": skillEntries,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-      print("📤 Submit Response: $data");
-
+    if (data['msg'] != null && data['msg'].toString().trim().isNotEmpty) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Success'),
-          content: Text(data['message'] ?? 'Skills updated'),
+          title: const Text('Notice'),
+          content: Text(data['msg']),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -274,15 +115,76 @@ class _AssignSkillsPageState extends State<AssignSkillsPage> {
           ],
         ),
       );
-    } catch (e) {
-      print("❌ Error during submission: $e");
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
-    } finally {
-      setState(() => isSubmitting = false);
     }
+  } catch (e) {
+    print("❌ Error fetching student skill data: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error: $e")),
+    );
+  } finally {
+    setState(() => isLoading = false);
   }
+}
+ Future<void> _submitSkills() async {
+  setState(() => isSubmitting = true);
+
+  try {
+    final hasEmptyGrade = studentList.any(
+      (student) => student['Grade'] == null || student['Grade'].toString().trim().isEmpty,
+    );
+
+    if (hasEmptyGrade) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Validation Error"),
+          content: const Text("Please enter Grade for all students before submitting."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
+      setState(() => isSubmitting = false);
+      return;
+    }
+
+    final skillEntries = studentList.map((s) => {
+      "StudentId": s['studentid'],
+      "Grade": s['Grade'] ?? '',
+    }).toList();
+
+    final response = await ApiService.post('/teacher/skill/store', body: {
+      "ExamId": int.parse(selectedExam ?? "0"),
+      "SkillId": int.parse(selectedSkill!),
+      "skills": skillEntries,
+    });
+
+    final data = jsonDecode(response.body);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Success'),
+        content: Text(data['message'] ?? 'Skills updated'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  } catch (e) {
+    print("❌ Error during submission: $e");
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+  } finally {
+    setState(() => isSubmitting = false);
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {

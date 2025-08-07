@@ -1,10 +1,13 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:student_app/teacher/complaint_teacher/teacher_add_complaint_page.dart';
 import 'package:student_app/teacher/complaint_teacher/teacher_complaint_details.dart';
+
+
 
 class TeacherComplaintListPage extends StatefulWidget {
   const TeacherComplaintListPage({super.key});
@@ -15,7 +18,7 @@ class TeacherComplaintListPage extends StatefulWidget {
 }
 
 class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
-  final String apiUrl = 'https://school.edusathi.in/api/teacher/complaint';
+  final String apiUrl = 'https://schoolerp.edusathi.in/api/teacher/complaint';
   List<dynamic> complaints = [];
   bool isLoading = true;
 
@@ -30,26 +33,53 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
-    print("Token: $token");
+    print("🔐 Token: $token");
 
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-    );
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      print("🔄 Response: ${response.body}");
 
-    if (response.statusCode == 200) {
-      setState(() {
-        complaints = jsonDecode(response.body);
-        isLoading = false;
-      });
-    } else {
+      print("📦 Status Code: ${response.statusCode}");
+      print("📨 Raw Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        print("✅ Decoded JSON: $decoded");
+
+        if (decoded is List) {
+          setState(() {
+            complaints = decoded;
+            isLoading = false;
+          });
+        } else {
+          print("❌ Decoded response is not a list.");
+          setState(() {
+            complaints = [];
+            isLoading = false;
+          });
+        }
+      } else {
+        print("❌ Failed to fetch. Status code: ${response.statusCode}");
+        setState(() {
+          complaints = [];
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load complaints')),
+        );
+      }
+    } catch (e) {
+      print("❌ Exception while fetching complaints: $e");
       setState(() {
         complaints = [];
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to load complaints')),
-      );
     }
   }
 
@@ -69,18 +99,9 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
           'Student Complaints',
           style: TextStyle(color: Colors.white),
         ),
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Colors.deepPurple,
         centerTitle: true,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back, color: Colors.white),
-        //   onPressed: () {
-        //     Navigator.pushReplacement(
-        //       context,
-        //       MaterialPageRoute(builder: (_) => const DashboardScreen()),
-        //     );
-        //   },
-        // ),
       ),
       body: isLoading
           ? const Center(
@@ -130,7 +151,6 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-
                           Row(
                             children: [
                               const Icon(
@@ -145,32 +165,256 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
                                 ),
                               ),
                               const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: getStatusColor(
-                                    status,
-                                  ).withOpacity(0.1),
-                                  border: Border.all(
-                                    color: getStatusColor(status),
+                              GestureDetector(
+                                onTap: () {
+                                  if (status != 0)
+                                    return; 
+
+                                  TextEditingController _descController =
+                                      TextEditingController();
+                                  int selectedStatus = 0;
+
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return Dialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                        ),
+                                        elevation: 16,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(20),
+                                          child: SingleChildScrollView(
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Container(
+                                                  width: double.infinity,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 10,
+                                                        horizontal: 16,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors
+                                                        .deepPurple
+                                                        .shade100, // Lighter shade for a softer look
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
+                                                  ),
+                                                  child: const Text(
+                                                    "Update Complaint",
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: Colors.deepPurple,
+                                                      letterSpacing: 0.3,
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 20),
+
+                                                // Dropdown Field
+                                                DropdownButtonFormField<int>(
+                                                  value: selectedStatus,
+                                                  decoration: InputDecoration(
+                                                    labelText: "Change Status",
+                                                    prefixIcon: const Icon(
+                                                      Icons.sync,
+                                                    ),
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  items: const [
+                                                    DropdownMenuItem(
+                                                      value: 0,
+                                                      child: Text("Pending"),
+                                                    ),
+                                                    DropdownMenuItem(
+                                                      value: 1,
+                                                      child: Text("Solved"),
+                                                    ),
+                                                  ],
+                                                  onChanged: (val) {
+                                                    selectedStatus = val!;
+                                                  },
+                                                ),
+                                                const SizedBox(height: 16),
+
+                                                // Description Field
+                                                TextField(
+                                                  controller: _descController,
+                                                  maxLines: 3,
+                                                  decoration: InputDecoration(
+                                                    labelText: "Description",
+                                                    hintText:
+                                                        "Enter details or reason...",
+                                                    prefixIcon: const Icon(
+                                                      Icons.description,
+                                                    ),
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 24),
+
+                                                // Buttons
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    OutlinedButton.icon(
+                                                      onPressed: () =>
+                                                          Navigator.pop(
+                                                            context,
+                                                          ),
+                                                      icon: const Icon(
+                                                        Icons.cancel,
+                                                        color: Colors.red,
+                                                      ),
+                                                      label: const Text(
+                                                        "Cancel",
+                                                        style: TextStyle(
+                                                          color: Colors.red,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    ElevatedButton.icon(
+                                                      onPressed: () async {
+                                                        final desc =
+                                                            _descController.text
+                                                                .trim();
+                                                        if (desc.isEmpty)
+                                                          return;
+
+                                                        final prefs =
+                                                            await SharedPreferences.getInstance();
+                                                        final token =
+                                                            prefs.getString(
+                                                              'token',
+                                                            ) ??
+                                                            '';
+
+                                                        final response = await http.post(
+                                                          Uri.parse(
+                                                            "https://schoolerp.edusathi.in/api/teacher/complaint/history/store",
+                                                          ),
+                                                          headers: {
+                                                            'Authorization':
+                                                                'Bearer $token',
+                                                            'Accept':
+                                                                'application/json',
+                                                          },
+                                                          body: {
+                                                            "ComplaintId":
+                                                                complaint['id']
+                                                                    .toString(),
+                                                            "Status":
+                                                                selectedStatus
+                                                                    .toString(),
+                                                            "Description": desc,
+                                                          },
+                                                        );
+
+                                                        print(
+                                                          "🟢 Response: ${response.body}",
+                                                        );
+                                                        Navigator.pop(context);
+
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                              "✅ Complaint updated",
+                                                            ),
+                                                          ),
+                                                        );
+
+                                                        fetchComplaints(); // Refresh
+                                                      },
+                                                      icon: const Icon(
+                                                        Icons.save,
+                                                      ),
+                                                      label: const Text("Save"),
+                                                      style: ElevatedButton.styleFrom(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 20,
+                                                              vertical: 12,
+                                                            ),
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
                                   ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  getStatusText(status),
-                                  style: TextStyle(
-                                    color: getStatusColor(status),
-                                    fontWeight: FontWeight.bold,
+                                  decoration: BoxDecoration(
+                                    color: getStatusColor(
+                                      status,
+                                    ).withOpacity(0.1),
+                                    border: Border.all(
+                                      color: getStatusColor(status),
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        status == 0
+                                            ? Icons.timelapse
+                                            : Icons.check_circle,
+                                        size: 16,
+                                        color: getStatusColor(status),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        getStatusText(status),
+                                        style: TextStyle(
+                                          color: getStatusColor(status),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-
                           Text(
                             complaint['Description']?.replaceAll(
                                   r"\r\n",
@@ -186,6 +430,22 @@ class _TeacherComplaintListPageState extends State<TeacherComplaintListPage> {
                 );
               },
             ),
+
+      /// ✅ Floating Button Added Here
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.deepPurple,
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const TeacherAddComplaintPage()),
+          );
+          if (result == true) {
+            fetchComplaints();
+            setState(() {});
+          }
+        },
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
     );
   }
 }
