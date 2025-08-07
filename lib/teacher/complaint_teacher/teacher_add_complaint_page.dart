@@ -29,7 +29,7 @@ class _TeacherAddComplaintPageState extends State<TeacherAddComplaintPage> {
     final token = prefs.getString('token') ?? '';
 
     final response = await http.post(
-      Uri.parse('https://school.edusathi.in/api/get_student'),
+      Uri.parse('https://schoolerp.edusathi.in/api/get_student'),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
 
@@ -55,46 +55,42 @@ class _TeacherAddComplaintPageState extends State<TeacherAddComplaintPage> {
     }
 
     setState(() => isSubmitting = true);
+    print(
+      '📤 Submitting: StudentId=$selectedStudentId, Description=${descriptionController.text}',
+    );
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
+    print("📌 Sending student_id: $selectedStudentId");
+    print("📌 Sending description: ${descriptionController.text.trim()}");
 
     final response = await http.post(
-      Uri.parse('https://school.edusathi.in/api/teacher/complaint/store'),
+      Uri.parse('https://schoolerp.edusathi.in/api/teacher/complaint/store'),
       headers: {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
+        // Don't set Content-Type manually; let http package handle it
       },
-      body: jsonEncode({
-        'StudentId': selectedStudentId,
+      body: {
+        'StudentId': selectedStudentId.toString(),
         'Description': descriptionController.text.trim(),
-      }),
+      },
     );
+
     print("🔴 Status code: ${response.statusCode}");
     print("🔴 Response body: ${response.body}");
 
     setState(() => isSubmitting = false);
 
-    if (response.statusCode == 200) {
-      final decoded = jsonDecode(response.body);
-      if (decoded is List &&
-          decoded.isNotEmpty &&
-          decoded[0]['status'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(decoded[0]['message'] ?? "Complaint submitted"),
-          ),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(decoded[0]['message'] ?? "Submission failed")),
-        );
-      }
+    final decoded = jsonDecode(response.body);
+    if (decoded['status'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(decoded['message'] ?? "Complaint submitted")),
+      );
+      Navigator.pop(context, true); // After adding complaint successfully
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to submit complaint")),
+        SnackBar(content: Text(decoded['message'] ?? "Submission failed")),
       );
     }
   }
