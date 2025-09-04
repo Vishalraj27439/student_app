@@ -29,7 +29,7 @@ class _TeacherAddComplaintPageState extends State<TeacherAddComplaintPage> {
     final token = prefs.getString('token') ?? '';
 
     final response = await http.post(
-      Uri.parse('https://schoolerp.edusathi.in/api/get_student'),
+      Uri.parse('https://school.edusathi.in/api/get_student'),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
 
@@ -65,11 +65,11 @@ class _TeacherAddComplaintPageState extends State<TeacherAddComplaintPage> {
     print("📌 Sending description: ${descriptionController.text.trim()}");
 
     final response = await http.post(
-      Uri.parse('https://schoolerp.edusathi.in/api/teacher/complaint/store'),
+      Uri.parse('https://school.edusathi.in/api/teacher/complaint/store'),
       headers: {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
-        // Don't set Content-Type manually; let http package handle it
+      
       },
       body: {
         'StudentId': selectedStudentId.toString(),

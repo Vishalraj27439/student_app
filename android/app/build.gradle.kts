@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,12 +8,18 @@ plugins {
     id("com.google.gms.google-services") version "4.4.0"
 }
 
-
-
 android {
     namespace = "com.techinnovationapp.edusathi"
     compileSdk = 35
-     ndkVersion = "27.0.12077973"
+    ndkVersion = "27.0.12077973"
+
+    defaultConfig {
+        applicationId = "com.techinnovationapp.edusathi"
+        minSdk = 21
+        targetSdk = 35
+        versionCode = 2
+        versionName = "1.1.0"
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -22,17 +31,27 @@ android {
         jvmTarget = "11"
     }
 
-    defaultConfig {
-        applicationId = "com.techinnovationapp.edusathi"
-        minSdk = 21
-        targetSdk = 35
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+    // 🔹 Load keystore properties
+    val keystorePropertiesFile = rootProject.file("key.properties")
+    val keystoreProperties = Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    }
+
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String?
+            keyPassword = keystoreProperties["keyPassword"] as String?
+            storeFile = keystoreProperties["storeFile"]?.let { file(it as String) }
+            storePassword = keystoreProperties["storePassword"] as String?
+        }
     }
 
     buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("debug")
+        getByName("release") {
+            isMinifyEnabled = false
+            isShrinkResources = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
@@ -45,5 +64,3 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging:24.1.2")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
-
-

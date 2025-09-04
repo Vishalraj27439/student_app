@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:http/http.dart' as http;
-import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
+
 
 class HomeworkDetailPage extends StatelessWidget {
   final Map<String, dynamic> homework;
@@ -22,32 +22,28 @@ class HomeworkDetailPage extends StatelessWidget {
   }
 
   Future<void> downloadFile(BuildContext context, String filePath) async {
-    if (Platform.isAndroid &&
-        await Permission.manageExternalStorage.request().isDenied) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Storage permission is required")),
-      );
-      return;
-    }
-
-    final fullUrl = 'https://school.edusathi.in/$filePath';
-
     try {
+      final fullUrl = filePath.startsWith('http')
+          ? filePath
+          : 'https://school.edusathi.in/$filePath';
+
       final response = await http.get(Uri.parse(fullUrl));
-      if (response.statusCode == 200) {
-        final directory = await getExternalStorageDirectory();
-        final fileName = filePath.split('/').last;
-        final file = File('${directory!.path}/$fileName');
-        await file.writeAsBytes(response.bodyBytes);
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Downloaded to ${file.path}")));
-
-        await OpenFile.open(file.path);
-      } else {
-        throw Exception('Download failed');
+      if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+        throw Exception("Failed to download file.");
       }
+
+      // ✅ Use app-specific storage
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = filePath.split('/').last;
+      final file = File('${dir.path}/$fileName');
+
+      await file.writeAsBytes(response.bodyBytes, flush: true);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Downloaded to ${file.path}")));
+
+      await OpenFile.open(file.path);
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -120,8 +116,7 @@ class HomeworkDetailPage extends StatelessWidget {
                     style: TextStyle(color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.deepPurple, // Change color if needed
+                    backgroundColor: Colors.deepPurple,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,

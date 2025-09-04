@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/splash_screen.dart';
 import 'package:student_app/dashboard/dashboard_screen.dart';
 import 'package:student_app/teacher/teacher_dashboard_screen.dart';
-// import 'package:student_app/login_page.dart';
 
 /// ✅ Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {

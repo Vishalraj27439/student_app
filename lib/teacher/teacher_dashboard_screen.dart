@@ -4,8 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/payment/payment_teacher_screen.dart';
 import 'package:student_app/teacher/complaint_teacher/teacher_complaint_list_page.dart';
-// import 'package:student_app/dashboard/attendance_pie_chart.dart';
-// import 'package:student_app/homework/homework_model.dart';
 import 'package:student_app/teacher/teacher_recent_homework.dart';
 import 'package:student_app/teacher/teacher_sidebar_menu.dart';
 
@@ -109,9 +107,6 @@ print("🪪 Token being used: $token");
           'half_day': data['attendances']?['half_day'] ?? 0,
           'working_days': data['attendances']?['working_days'] ?? 0,
         };
-        // homeworks = List<Map<String, dynamic>>.from(data['homeworks'] ?? []);
-        // print("📚 Homeworks from API: ${data['homeworks']}");
-
         isLoading = false;
       });
     } else {

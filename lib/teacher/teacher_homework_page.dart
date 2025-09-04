@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:path_provider/path_provider.dart';
+// import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'package:student_app/homework/teacher_add_homework_page.dart';
 import 'teacher_homework_detail_page.dart';
@@ -55,35 +56,29 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
     }
   }
 
-  Future<void> downloadFile(String fileUrl, String fileName) async {
-    if (!fileUrl.startsWith('http')) {
-      fileUrl = 'https://school.edusathi.in/$fileUrl';
-    }
-
-    if (Platform.isAndroid &&
-        await Permission.manageExternalStorage.request().isDenied) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Storage permission is required")),
-      );
-      return;
-    }
-
+  Future<void> downloadFile(BuildContext context, String filePath) async {
     try {
-      final response = await http.get(Uri.parse(fileUrl));
-      if (response.statusCode == 200) {
-        final directory = await getExternalStorageDirectory();
-        final path = '${directory!.path}/$fileName';
-        final file = File(path);
-        await file.writeAsBytes(response.bodyBytes);
+      final fullUrl = filePath.startsWith('http')
+          ? filePath
+          : 'https://school.edusathi.in/$filePath';
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Downloaded to $path")));
-
-        await OpenFile.open(path);
-      } else {
-        throw Exception('Download failed: ${response.statusCode}');
+      final response = await http.get(Uri.parse(fullUrl));
+      if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+        throw Exception("Failed to download file.");
       }
+
+      // ✅ Use app-specific storage
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = filePath.split('/').last;
+      final file = File('${dir.path}/$fileName');
+
+      await file.writeAsBytes(response.bodyBytes, flush: true);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Downloaded to ${file.path}")));
+
+      await OpenFile.open(file.path);
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -109,9 +104,7 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
               itemBuilder: (context, index) {
                 final hw = homeworks[index];
                 final attachmentUrl = hw['Attachment'];
-                final fileName = (attachmentUrl != null)
-                    ? attachmentUrl.split('/').last
-                    : "";
+               
 
                 return GestureDetector(
                   onTap: () {
@@ -193,7 +186,7 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
                                   color: Colors.deepPurple,
                                 ),
                                 onPressed: () {
-                                  downloadFile(attachmentUrl, fileName);
+                                  downloadFile(context, attachmentUrl);
                                 },
                               ),
                             ),
