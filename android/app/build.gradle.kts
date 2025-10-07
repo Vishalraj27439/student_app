@@ -17,8 +17,8 @@ android {
         applicationId = "com.techinnovationapp.edusathi"
         minSdk = 21
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 6
+        versionName = "1.2.1"
     }
 
     compileOptions {

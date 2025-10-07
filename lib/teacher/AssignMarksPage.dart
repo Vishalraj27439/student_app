@@ -102,8 +102,7 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
         Uri.parse("https://school.edusathi.in/api/teacher/mark"),
         headers: {
           "Authorization": "Bearer $token",
-          "Content-Type":
-              "application/x-www-form-urlencoded", // required for form data
+          "Content-Type": "application/x-www-form-urlencoded",
         },
         body: {"ExamId": selectedExamId!, "SubjectId": selectedSubjectId!},
       );
@@ -140,13 +139,12 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
             text: s['GetMark']?.toString() ?? '',
           );
           if (students.isNotEmpty) {
-  final totalMark = students.first['TotalMark']?.toString() ?? '';
-  totalMarkController.text = totalMark;
-}
+            final totalMark = students.first['TotalMark']?.toString() ?? '';
+            totalMarkController.text = totalMark;
+          }
         }
         setState(() {
           filteredStudents = List.from(students);
-          // updateTotalMarkFieldFromLoadedData();
           isLoading = false;
         });
       } else {
@@ -212,7 +210,7 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
         return;
       }
 
-      int o = int.tryParse(obtain) ?? -1;
+      double o = double.tryParse(obtain) ?? -1;
       int t = int.tryParse(total) ?? -1;
 
       if (o > t) {
@@ -243,7 +241,7 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
         "StudentId": s['id'],
         "IsPresent": s['IsPresent'] ?? 'present',
         "TotalMark": int.tryParse(s['TotalMark'].toString()) ?? 0,
-        "GetMark": int.tryParse(s['GetMark'].toString()) ?? 0,
+        "GetMark": double.tryParse(s['GetMark'].toString()) ?? 0,
       };
     }).toList();
 
@@ -317,6 +315,7 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -606,7 +605,9 @@ class _AssignMarksPageState extends State<AssignMarksPage> {
                                     horizontal: 10.0,
                                   ),
                                 ),
-                                keyboardType: TextInputType.number,
+                                keyboardType: TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
                                 controller: obtainControllers[student['id']],
                                 onChanged: (val) {
                                   student['GetMark'] = val;

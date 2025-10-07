@@ -1,10 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:student_app/Exam/exam_schedule.dart';
 import 'package:student_app/dashboard/attendance_pie_chart.dart';
-import 'package:student_app/teacher/Attendance_UI/attendance_screen.dart';
 import 'package:student_app/homework/homework_model.dart';
 import 'package:student_app/homework/homework_page.dart';
 import 'package:student_app/dashboard/timetable_page.dart';
@@ -15,6 +19,9 @@ import 'package:student_app/profile_page.dart';
 import 'package:student_app/school_info_page.dart';
 import 'package:student_app/complaint/view_complaints_page.dart';
 import 'package:student_app/subjects_page.dart';
+import 'package:student_app/syllabus/syllabus.dart';
+import 'package:student_app/teacher/Attendance_UI/stu_attendance_report.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -34,23 +41,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   int dues = 0;
   int payments = 0;
+  String lastPaymentDate = '';
   int subjects = 0;
   Map<String, dynamic> attendance = {};
   List<Map<String, dynamic>> homeworks = [];
-
+  List<dynamic> notices = [];
+  List<dynamic> events = [];
   @override
   void initState() {
     super.initState();
     initData();
   }
 
- Future<void> initData() async {
+  Future<void> initData() async {
     await loadProfileData();
     await fetchDashboardData();
     setState(() {
       isLoading = false;
     });
   }
+
   Future<void> loadProfileData() async {
     final prefs = await SharedPreferences.getInstance();
     studentName = prefs.getString('student_name') ?? '';
@@ -74,6 +84,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       dues = data['dues'] ?? 0;
       payments = int.tryParse(data['payments'].toString()) ?? 0;
+      final rawDate = data['payment_date'] ?? '';
+      if (rawDate.isNotEmpty) {
+        try {
+          final dateObject = DateTime.parse(rawDate);
+          lastPaymentDate =
+              '${dateObject.day}/${dateObject.month}/${dateObject.year}';
+        } catch (e) {
+          lastPaymentDate = rawDate;
+        }
+      } else {
+        lastPaymentDate = '';
+      }
+
       subjects = data['subjects'] ?? 0;
       attendance = {
         'present': data['attendances']?['present'] ?? 0,
@@ -83,17 +106,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'working_days': data['attendances']?['working_days'] ?? 0,
       };
       homeworks = List<Map<String, dynamic>>.from(data['homeworks'] ?? []);
+      notices = data['notices'] ?? [];
+      events = data['events'] ?? [];
     } else {
       print('❌ Dashboard fetch failed: ${response.statusCode}');
     }
     prefs.getKeys().forEach((key) {
       print('$key = ${prefs.get(key)}');
       FirebaseMessaging.instance.getToken().then((fcmToken) {
-  print("🟢 FCM Device Token: $fcmToken");
-
-  
-});
-
+        print("🟢 FCM Device Token: $fcmToken");
+      });
     });
   }
 
@@ -115,7 +137,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Text(
               '$schoolName',
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
             ),
             CircleAvatar(backgroundImage: NetworkImage(studentPhoto)),
           ],
@@ -134,7 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       GestureDetector(
                         child: DashboardCard(
-                          title: 'Dues',
+                          title: 'Fee Amount',
                           value: dues.toString(),
                           borderColor: Colors.red,
                           backgroundColor: Colors.red.shade50,
@@ -147,11 +169,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       GestureDetector(
                         child: DashboardCard(
-                          title: 'Payments',
+                          title: 'Last Pay',
                           value: payments.toString(),
                           borderColor: Colors.green,
                           backgroundColor: Colors.green.shade50,
                           textColor: Colors.green,
+                          date: lastPaymentDate,
                         ),
                         onTap: () => Navigator.push(
                           context,
@@ -195,6 +218,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 10),
                   buildRecentHomeworks(context, homeworks),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 350,
+                    child: NoticesEventsToggle(
+                      initialNotices: notices,
+                      initialEvents: events,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -208,6 +239,7 @@ class DashboardCard extends StatelessWidget {
   final Color borderColor;
   final Color backgroundColor;
   final Color textColor;
+  final String? date;
 
   const DashboardCard({
     super.key,
@@ -216,13 +248,14 @@ class DashboardCard extends StatelessWidget {
     required this.borderColor,
     required this.backgroundColor,
     required this.textColor,
+    this.date,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 98,
-      height: 75,
+      height: 88,
       margin: const EdgeInsets.only(right: 10),
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
@@ -238,10 +271,24 @@ class DashboardCard extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: textColor,
-              fontSize: 14,
+              fontSize: 13,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 5),
+          if (date != null && date!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 0.0, bottom: 2.0),
+              child: Text(
+                date!,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: textColor.withOpacity(0.8),
+                ),
+              ),
+            )
+          else
+            const SizedBox(height: 10),
           Text(
             value,
             style: TextStyle(
@@ -256,9 +303,231 @@ class DashboardCard extends StatelessWidget {
   }
 }
 
+class InfoCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final bool isEvent;
+  final String baseUrl = 'https://school.edusathi.in/';
+
+  const InfoCard({super.key, required this.item, required this.isEvent});
+
+  Future<void> _launchUrl(BuildContext context, String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open attachment link.')),
+      );
+    }
+  }
+Future<void> _downloadFile(BuildContext context, String url) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+        throw Exception("Failed to download file. Status: ${response.statusCode}");
+      }
+      final dir = await getApplicationDocumentsDirectory();
+      final fileName = url.split('/').last; 
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(response.bodyBytes, flush: true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Downloaded and saved to: ${dir.path}/$fileName")),
+      );
+      await OpenFile.open(file.path);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Download error: $e")),
+      );
+    }
+  }
+  @override
+  Widget build(BuildContext context) {
+    final titleKey = isEvent ? "EventTitle" : "NoticeTitle";
+    String formatDate(String? inputDate) {
+      if (inputDate == null || inputDate.isEmpty) return '';
+      try {
+        final date = DateTime.parse(inputDate);
+        return DateFormat('dd-MM-yyyy').format(date);
+      } catch (e) {
+        return inputDate;
+      }
+    }
+    final Color primaryColor = isEvent
+        ? Colors.orange.shade700
+        : Colors.indigo.shade700;
+    final Color lightColor = isEvent
+        ? Colors.orange.shade50
+        : Colors.indigo.shade50;
+
+    final String? attachmentPath = item["Attachment"];
+    final bool hasAttachment =
+        attachmentPath != null && attachmentPath.isNotEmpty;
+    final String fullAttachmentUrl = hasAttachment
+        ? baseUrl + attachmentPath
+        : '';
+
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: primaryColor, width: 1.5),
+      ),
+      color: lightColor,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    item[titleKey] ?? 'Untitled',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  formatDate(item["Date"] ?? 'N/A'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+
+            const Divider(height: 16),
+
+            Text(
+              item["Description"] ?? 'No description provided.',
+              style: TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+            if (hasAttachment) ...[
+              const SizedBox(height: 12),
+              Row(
+                mainAxisSize: MainAxisSize.min, 
+                children: [
+                
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.visibility, size: 18),
+                    label: const Text("View Attachment"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: primaryColor,
+                      side: BorderSide(color: primaryColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+           
+                    onPressed: () => _launchUrl(context, fullAttachmentUrl),
+                  ),
+
+                  const SizedBox(width: 25), 
+                
+                  IconButton(
+                    onPressed: () => _downloadFile(context, fullAttachmentUrl),
+                    icon: Icon(
+                      Icons.download,
+                      color: primaryColor,
+                      size: 24, 
+                    ),
+                    tooltip:
+                        'Download Attachment', 
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NoticesEventsToggle extends StatelessWidget {
+  final List<dynamic> initialNotices;
+  final List<dynamic> initialEvents;
+
+  const NoticesEventsToggle({
+    super.key,
+    required this.initialNotices,
+    required this.initialEvents,
+  });
+  Widget _buildList(List<dynamic> data, {required bool isEvent}) {
+    if (data.isEmpty) {
+      return Center(
+        child: Text(
+          isEvent ? 'No upcoming events.' : 'No new notices posted.',
+          style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+      itemCount: data.length,
+      itemBuilder: (context, index) {
+        final item = data[index] as Map<String, dynamic>;
+        return InfoCard(item: item, isEvent: isEvent);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0),
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.deepPurple, width: 1),
+              ),
+              child: TabBar(
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.deepPurple,
+                ),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.deepPurple,
+                splashBorderRadius: BorderRadius.circular(20),
+                tabs: const [
+                  Tab(text: 'Notices'),
+                  Tab(text: 'Events'),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: <Widget>[
+                _buildList(initialNotices, isEvent: false),
+
+                _buildList(initialEvents, isEvent: true),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class LeftSidebarMenu extends StatelessWidget {
   final String studentName;
-  // final String schoolName;
   final String studentPhoto;
   final String studentClass;
   final String studentsection;
@@ -266,7 +535,6 @@ class LeftSidebarMenu extends StatelessWidget {
   const LeftSidebarMenu({
     super.key,
     required this.studentName,
-    // required this.schoolName,
     required this.studentPhoto,
     required this.studentClass,
     required this.studentsection,
@@ -281,11 +549,8 @@ class LeftSidebarMenu extends StatelessWidget {
           children: [
             Container(
               color: Colors.deepPurple,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ), // Reduce padding
-              height: 120, // Set a smaller height (adjust as needed)
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              height: 120,
               child: Row(
                 children: [
                   CircleAvatar(
@@ -362,7 +627,7 @@ class LeftSidebarMenu extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => AttendanceScreen()),
+                  MaterialPageRoute(builder: (_) => StudentAttendanceScreen()),
                 );
               },
             ),
@@ -384,6 +649,26 @@ class LeftSidebarMenu extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => SubjectsPage()),
+                );
+              },
+            ),
+            sidebarTile(
+              icon: Icons.book_sharp,
+              title: 'Syllabus',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => SyllabusPage()),
+                );
+              },
+            ),
+            sidebarTile(
+              icon: Icons.receipt_long_outlined,
+              title: 'Exam Schedule',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ExamSchedulePage()),
                 );
               },
             ),
@@ -428,7 +713,7 @@ class LeftSidebarMenu extends StatelessWidget {
               },
             ),
 
-            // const Divider(),
+     
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Logout', style: TextStyle(color: Colors.red)),
@@ -502,6 +787,7 @@ class LeftSidebarMenu extends StatelessWidget {
     );
   }
 }
+
 Widget sidebarTile({
   required IconData icon,
   required String title,

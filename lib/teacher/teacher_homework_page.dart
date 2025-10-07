@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'package:student_app/homework/teacher_add_homework_page.dart';
+// import 'package:prime_school/homework/teacher_add_homework_page.dart';
 import 'teacher_homework_detail_page.dart';
 
 class TeacherHomeworkPage extends StatefulWidget {
@@ -104,7 +105,6 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
               itemBuilder: (context, index) {
                 final hw = homeworks[index];
                 final attachmentUrl = hw['Attachment'];
-               
 
                 return GestureDetector(
                   onTap: () {
@@ -177,19 +177,43 @@ class _TeacherHomeworkPageState extends State<TeacherHomeworkPage> {
                               "📝 ${(hw['Remark'] as String).length > 150 ? hw['Remark'].substring(0, 150) + '...' : hw['Remark']}",
                               style: const TextStyle(fontSize: 13),
                             ),
-                          if (attachmentUrl != null)
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: IconButton(
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              IconButton(
                                 icon: const Icon(
-                                  Icons.download_rounded,
+                                  Icons.edit,
                                   color: Colors.deepPurple,
                                 ),
-                                onPressed: () {
-                                  downloadFile(context, attachmentUrl);
+                                onPressed: () async {
+                                  // Edit page par navigate karein aur homework object pass karein
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => TeacherAddHomeworkPage(
+                                        homeworkToEdit: hw,
+                                      ),
+                                    ),
+                                  );
+
+                                  if (result == true) {
+                                   
+                                    fetchHomeworks();
+                                  }
                                 },
                               ),
-                            ),
+                              if (attachmentUrl != null)
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.download_rounded,
+                                    color: Colors.deepPurple,
+                                  ),
+                                  onPressed: () {
+                                    downloadFile(context, attachmentUrl);
+                                  },
+                                ),
+                            ],
+                          ),
                         ],
                       ),
                     ),

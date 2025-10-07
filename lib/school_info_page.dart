@@ -36,13 +36,11 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
       setState(() {
         schoolLogo = data['SchoolLogo'] ?? '';
         schoolDetails = {
-          "Registration No.": data['RegNo'] ?? '',
-          "School Code": data['SchoolCode'] ?? '',
-          "UDISE Code": data['UDISE'] ?? '',
           "Email": data['SchEmail'] ?? '',
           "Website": data['Website'] ?? '',
           "Address": data['Address'] ?? '',
-          "Principal": data['PrincipalName'] ?? '',
+          "Principal": data["PrincipalName"] ?? '',
+          "Contact": data["ContactNo"].toString(),
         };
         isloading = false;
       });

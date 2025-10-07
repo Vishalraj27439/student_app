@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:student_app/Exam/exam_schedule.dart';
+import 'package:student_app/alert/stu_alert.dart';
 import 'package:student_app/login_page.dart';
 import 'package:student_app/payment/payment_teacher_screen.dart';
 import 'package:student_app/school_info_page.dart';
+import 'package:student_app/syllabus/syllabus.dart';
 import 'package:student_app/teacher/AssignMarksPage.dart';
 import 'package:student_app/teacher/AssignSkillsPage.dart';
 import 'package:student_app/teacher/ResultcardPage.dart';
@@ -146,12 +149,35 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
               MaterialPageRoute(builder: (_) => TeacherHomeworkPage()),
             );
           }),
+          sidebarItem(context, Icons.add_alert, 'Student Alert', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => StudentAlertPage()),
+            );
+          }),
           sidebarItem(context, Icons.assignment, 'Assign Marks', () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => AssignMarksPage()),
             );
           }),
+          sidebarItem(context, Icons.book_sharp, 'Syllabus', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => SyllabusPage()),
+            );
+          }),
+          sidebarItem(
+            context,
+            Icons.receipt_long_outlined,
+            'Exam Schedule',
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => ExamSchedulePage()),
+              );
+            },
+          ),
           sidebarItem(context, Icons.star_rate, 'Assign Skills', () {
             Navigator.push(
               context,

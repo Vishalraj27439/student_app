@@ -28,6 +28,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String gender = '';
   String adDate = '';
   String LedNo = '';
+  bool isloading = true;
 
   @override
   void initState() {
@@ -84,6 +85,7 @@ class _ProfilePageState extends State<ProfilePage> {
           LedNo = data['LedgerNo'] ?? '';
           adDate = data['AdmissionDate'] ?? '';
         });
+        isloading = false;
       } else {
         print('❌ Profile fetch failed: ${response.statusCode}');
       }
@@ -100,93 +102,115 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: Colors.deepPurple,
         iconTheme: IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 45,
-                      backgroundImage: NetworkImage(
-                        studentPhoto.isNotEmpty
-                            ? studentPhoto
-                            : 'https/images/logo.png',
-                      ),
-                    ),
-                    SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+      body: isloading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Row(
                         children: [
-                          Text(
-                            studentName,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                          CircleAvatar(
+                            radius: 45,
+                            backgroundImage: NetworkImage(
+                              studentPhoto.isNotEmpty
+                                  ? studentPhoto
+                                  : 'https/images/logo.png',
                             ),
                           ),
-                          SizedBox(height: 5),
+                          SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  studentName,
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 5),
 
-                          Text("Class: $className - $section"),
-                          Text("Roll No: $rollNo"),
+                                Text("Class: $className - $section"),
+                                Text("Roll No: $rollNo"),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                Divider(height: 30, thickness: 1),
-                buildInfoRow(Icons.people, "Father's Name", "$fatherName "),
-                buildInfoRow(Icons.people, "Mother's Name", " $motherName"),
-                buildInfoRow(Icons.person, "Gender", gender),
-                buildInfoRow(Icons.phone, "Contact", contact),
-                buildInfoRow(Icons.cake, "Date Of Birth", dob),
-                buildInfoRow(
-                  Icons.calendar_today,
-                  "Addmission Date",
-                  '$adDate',
-                ),
-                buildInfoRow(Icons.card_membership, "Ledger No.", '$LedNo'),
-                buildInfoRow(Icons.self_improvement, "Religion", '$religion'),
-                buildInfoRow(Icons.badge, "Category", '$category'),
-                buildInfoRow(Icons.label_important, "Caste", '$caste'),
-                buildInfoRow(Icons.water_drop, "Blood Group", "$bloodGroup"),
-                buildInfoRow(Icons.location_on, "Address", address),
-
-                SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ChangePasswordPage(),
+                      Divider(height: 30, thickness: 1),
+                      buildInfoRow(
+                        Icons.people,
+                        "Father's Name",
+                        "$fatherName ",
                       ),
-                    );
-                  },
-                  icon: Icon(Icons.lock, color: Colors.white),
-                  label: Text(
-                    "Change Password",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                      buildInfoRow(
+                        Icons.people,
+                        "Mother's Name",
+                        " $motherName",
+                      ),
+                      buildInfoRow(Icons.person, "Gender", gender),
+                      buildInfoRow(Icons.phone, "Contact", contact),
+                      buildInfoRow(Icons.cake, "Date Of Birth", dob),
+                      buildInfoRow(
+                        Icons.calendar_today,
+                        "Addmission Date",
+                        '$adDate',
+                      ),
+                      buildInfoRow(
+                        Icons.card_membership,
+                        "Ledger No.",
+                        '$LedNo',
+                      ),
+                      buildInfoRow(
+                        Icons.self_improvement,
+                        "Religion",
+                        '$religion',
+                      ),
+                      buildInfoRow(Icons.badge, "Category", '$category'),
+                      buildInfoRow(Icons.label_important, "Caste", '$caste'),
+                      buildInfoRow(
+                        Icons.water_drop,
+                        "Blood Group",
+                        "$bloodGroup",
+                      ),
+                      buildInfoRow(Icons.location_on, "Address", address),
+
+                      SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ChangePasswordPage(),
+                            ),
+                          );
+                        },
+                        icon: Icon(Icons.lock, color: Colors.white),
+                        label: Text(
+                          "Change Password",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 

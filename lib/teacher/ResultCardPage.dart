@@ -179,7 +179,6 @@ class _ResultCardPageState extends State<ResultCardPage> {
                     ),
                   )
                 : const SizedBox.shrink(),
-
             Expanded(
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -189,16 +188,15 @@ class _ResultCardPageState extends State<ResultCardPage> {
                       itemCount: filteredResults.length,
                       itemBuilder: (context, index) {
                         final student = filteredResults[index];
-
                         final marks = (student['Marks'] ?? []) as List;
 
                         int totalMarks = 0;
-                        int obtainedMarks = 0;
+                        double obtainedMarks = 0;
 
-                        for (var mark in marks) {
+                        for (var mark in marks) {                      
+                          totalMarks += int.tryParse(mark['TotalMark']) ?? 0;                   
                           if (mark['IsPresent'] == 'Yes') {
-                            totalMarks += int.tryParse(mark['TotalMark']) ?? 0;
-                            obtainedMarks += int.tryParse(mark['GetMark']) ?? 0;
+                            obtainedMarks += double.tryParse(mark['GetMark']) ?? 0;
                           }
                         }
 
@@ -230,9 +228,7 @@ class _ResultCardPageState extends State<ResultCardPage> {
                                   "F Name: ${_toTitleCase(student['FatherName'].toString())}",
                                   style: const TextStyle(fontSize: 14),
                                 ),
-
                                 const Divider(height: 20),
-
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -312,7 +308,6 @@ class _ResultCardPageState extends State<ResultCardPage> {
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
-                                  // crossAxisAlignment: CrossAxisAlignment.,
                                   children: [
                                     Text(
                                       "Total: $obtainedMarks / $totalMarks",

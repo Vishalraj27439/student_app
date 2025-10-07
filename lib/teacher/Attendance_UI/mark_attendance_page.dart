@@ -85,7 +85,7 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
       headers: {'Authorization': 'Bearer $token'},
       body: {'Date': DateFormat('yyyy-MM-dd').format(selectedDate)},
     );
-   
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
 
@@ -119,16 +119,14 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
       headers: {'Authorization': 'Bearer $token'},
       body: {'Date': DateFormat('yyyy-MM-dd').format(selectedDate)},
     );
-   
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
 
       if (data.isNotEmpty) {
-      
         students = List<Map<String, dynamic>>.from(data);
         filteredStudents = List.from(students);
       } else {
-      
         students = [];
         filteredStudents = [];
       }
@@ -166,6 +164,7 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
       body: jsonEncode(payload),
     );
     print('submitAttendance 🤔🤔response: ${response.body}');
+    // SnackBar
     setState(() => isSubmitting = false);
 
     final result = jsonDecode(response.body);
@@ -331,9 +330,12 @@ class _MarkAttendancePageState extends State<MarkAttendancePage> {
 
                   // final status = student['Status'];
 
-                  return Card( color: (student['Status'] == null || student['Status'] == 'not_marked')
-      ? Colors.grey.shade200
-      : Colors.white,
+                  return Card(
+                    color:
+                        (student['Status'] == null ||
+                            student['Status'] == 'not_marked')
+                        ? Colors.grey.shade200
+                        : Colors.white,
                     margin: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,

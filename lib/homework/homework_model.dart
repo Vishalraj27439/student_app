@@ -8,14 +8,14 @@ import 'package:open_file/open_file.dart';
 import 'package:student_app/homework/homework_detail_page.dart';
 import 'package:student_app/homework/homework_page.dart';
 
-// Function to format the date
+
 String formatDate(String? inputDate) {
   if (inputDate == null || inputDate.isEmpty) return '';
   try {
-    final date = DateTime.parse(inputDate); // expects yyyy-MM-dd
+    final date = DateTime.parse(inputDate); 
     return DateFormat('dd-MM-yyyy').format(date);
   } catch (e) {
-    return inputDate; // fallback to raw string
+    return inputDate; 
   }
 }
 
@@ -30,7 +30,7 @@ Future<void> downloadFile(BuildContext context, String filePath) async {
       throw Exception("Failed to download file.");
     }
 
-    // ✅ Use app-specific storage
+    
     final dir = await getApplicationDocumentsDirectory();
     final fileName = filePath.split('/').last;
     final file = File('${dir.path}/$fileName');

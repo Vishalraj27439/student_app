@@ -73,7 +73,6 @@ Future<void> downloadReceipt(dynamic paymentId) async {
       final url = data['url'];
       final filename = url.split('/').last;
 
-      // Ask for permission (optional, for older Androids)
       await Permission.storage.request();
 
       final dir = await getApplicationDocumentsDirectory(); // safer directory

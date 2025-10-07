@@ -7,7 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 class TeacherAddHomeworkPage extends StatefulWidget {
-  const TeacherAddHomeworkPage({super.key});
+  final Map<String, dynamic>? homeworkToEdit;
+  const TeacherAddHomeworkPage({super.key, this.homeworkToEdit});
 
   @override
   State<TeacherAddHomeworkPage> createState() => _TeacherAddHomeworkPageState();
@@ -30,10 +31,35 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
   @override
   void initState() {
     super.initState();
-    fetchClasses();
+
     final today = DateTime.now();
     assignDate = today;
     submissionDate = today;
+    if (widget.homeworkToEdit != null) {
+      // Homework details fetch karne se pehle classes aur sections ko await karein
+      _loadEditData();
+    } else {
+      // Naya homework add karne ke liye
+      fetchClasses();
+    }
+  }
+
+  Future<void> _loadEditData() async {
+    setState(() => isLoading = true);
+    await fetchClasses();
+    await fetchHomeworkDetails(widget.homeworkToEdit!['id']);
+    setState(() => isLoading = false);
+  }
+
+  // --- Utility Functions ---
+
+  Future<void> fetchClassesAndSections() async {
+    setState(() => isLoading = true);
+    await fetchClasses();
+    if (selectedClassId != null) {
+      await fetchSections(selectedClassId!);
+    }
+    setState(() => isLoading = false);
   }
 
   Future<void> fetchClasses() async {
@@ -43,23 +69,22 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
     final response = await http.post(
       Uri.parse('https://school.edusathi.in/api/get_class'),
       headers: {
-        'Authorization': 'Bearer $token', // ✅ Add this
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
     );
-
-    print("🔵 Class API Status: ${response.statusCode}");
-    print("🔵 Class API Response: ${response.body}");
 
     if (response.statusCode == 200) {
       setState(() {
         classes = jsonDecode(response.body);
       });
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Failed to fetch classes")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to fetch classes")),
+        );
+      }
     }
   }
 
@@ -67,43 +92,82 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
-    print("🟢 Fetching sections for ClassId: $classId");
-
     final response = await http.post(
       Uri.parse('https://school.edusathi.in/api/get_section'),
       headers: {
-        'Authorization': 'Bearer $token', // ✅ REQUIRED
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: jsonEncode({'ClassId': classId}),
     );
 
-    print("🟢 Section API Status: ${response.statusCode}");
-    print("🟢 Section API Response: ${response.body}");
-
     if (response.statusCode == 200) {
       setState(() {
         sections = jsonDecode(response.body);
-        selectedSectionId = null;
+        selectedSectionId = null; // Reset section on class change
       });
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Failed to fetch sections")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to fetch sections")),
+        );
+      }
     }
   }
 
-  Future<void> pickFile() async {
-    final result = await FilePicker.platform.pickFiles();
-    if (result != null && result.files.single.path != null) {
+  // --- New `fetchHomeworkDetails` Function ---
+  Future<void> fetchHomeworkDetails(int homeworkId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final response = await http.post(
+      Uri.parse('https://school.edusathi.in/api/teacher/homework/edit'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({'HomeworkId': homeworkId}),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+
+      // Title aur Description ko set karein
       setState(() {
-        selectedFile = File(result.files.single.path!);
+        _titleController.text = data['HomeworkTitle'] ?? '';
+        _descriptionController.text = data['Remark'] ?? '';
+        assignDate = DateTime.tryParse(data['WorkDate'] ?? '');
+        submissionDate = DateTime.tryParse(data['SubmissionDate'] ?? '');
       });
+
+      // Class aur Section ID ko check aur set karein
+      final classId = int.tryParse(data['Class'] ?? '');
+      final sectionId = int.tryParse(data['Section'] ?? '');
+
+      if (classId != null && classes.any((c) => c['id'] == classId)) {
+        setState(() {
+          selectedClassId = classId;
+        });
+        // Sections fetch karein
+        await fetchSections(selectedClassId!);
+        if (sectionId != null && sections.any((s) => s['id'] == sectionId)) {
+          setState(() {
+            selectedSectionId = sectionId;
+          });
+        }
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load homework details')),
+      );
     }
   }
+  // --- Updated `submitHomework` Function ---
 
   Future<void> submitHomework() async {
+    // ... (rest of the validation code is the same)
     if (selectedClassId == null ||
         selectedSectionId == null ||
         assignDate == null ||
@@ -117,24 +181,36 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
     }
 
     setState(() => isLoading = true);
-
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
+    final isEditMode = widget.homeworkToEdit != null;
+    final apiUrl = isEditMode
+        ? 'https://school.edusathi.in/api/teacher/homework/update'
+        : 'https://school.edusathi.in/api/teacher/homework/store';
 
-    final request =
-        http.MultipartRequest(
-            'POST',
-            Uri.parse('https://school.edusathi.in/api/teacher/homework/store'),
-          )
-          ..headers['Authorization'] = 'Bearer $token'
-          ..fields['Class'] = selectedClassId.toString()
-          ..fields['Section'] = selectedSectionId.toString()
-          ..fields['AssignDate'] = DateFormat('yyyy-MM-dd').format(assignDate!)
-          ..fields['SubmissionDate'] = DateFormat(
-            'yyyy-MM-dd',
-          ).format(submissionDate!)
-          ..fields['Title'] = _titleController.text
-          ..fields['Description'] = _descriptionController.text;
+    final request = http.MultipartRequest('POST', Uri.parse(apiUrl))
+      ..headers['Authorization'] = 'Bearer $token'
+      ..fields['Class'] = selectedClassId.toString()
+      ..fields['Section'] = selectedSectionId.toString()
+      ..fields['Title'] = _titleController.text
+      ..fields['Description'] = _descriptionController.text;
+
+    if (isEditMode) {
+      request.fields['HomeworkId'] = widget.homeworkToEdit!['id'].toString();
+      request.fields['AssignDate'] = DateFormat(
+        'yyyy-MM-dd',
+      ).format(assignDate!);
+      request.fields['SubmissionDate'] = DateFormat(
+        'yyyy-MM-dd',
+      ).format(submissionDate!);
+    } else {
+      request.fields['AssignDate'] = DateFormat(
+        'yyyy-MM-dd',
+      ).format(assignDate!);
+      request.fields['SubmissionDate'] = DateFormat(
+        'yyyy-MM-dd',
+      ).format(submissionDate!);
+    }
 
     if (selectedFile != null) {
       request.files.add(
@@ -142,31 +218,47 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
       );
     }
 
-    final response = await request.send();
-    final respStr = await response.stream.bytesToString();
-    final decoded = jsonDecode(respStr);
+    try {
+      final response = await request.send();
+      final respStr = await response.stream.bytesToString();
+      final decoded = jsonDecode(respStr);
 
-    setState(() => isLoading = false);
-
-    if (decoded['status'] == true) {
+      setState(() => isLoading = false);
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(decoded['message'])));
+        Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(decoded['message'] ?? 'Upload failed')),
+        );
+      }
+    } catch (e) {
+      setState(() => isLoading = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(decoded['message'])));
-      Navigator.pop(context, true); // go back
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(decoded['message'] ?? 'Upload failed')),
-      );
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  Future<void> pickFile() async {
+    final result = await FilePicker.platform.pickFiles();
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        selectedFile = File(result.files.single.path!);
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // ... (rest of the build method is the same)
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Add Homework",
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          widget.homeworkToEdit != null ? "Edit Homework" : "Add Homework",
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.deepPurple,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -217,11 +309,9 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
                   TextFormField(
                     controller: _descriptionController,
                     decoration: const InputDecoration(labelText: "Description"),
-                    maxLines: 3,
+                    maxLines: 6,
                   ),
                   const SizedBox(height: 10),
-
-                  // Assign Date Section
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -282,10 +372,7 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 10),
-
-                  // Submission Date Section
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -346,7 +433,6 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 10),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -408,7 +494,6 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
                             ),
                     ],
                   ),
-
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -417,9 +502,11 @@ class _TeacherAddHomeworkPageState extends State<TeacherAddHomeworkPage> {
                         backgroundColor: Colors.deepPurple,
                       ),
                       onPressed: submitHomework,
-                      child: const Text(
-                        "Submit Homework",
-                        style: TextStyle(color: Colors.white),
+                      child: Text(
+                        widget.homeworkToEdit != null
+                            ? "Update Homework"
+                            : "Submit Homework",
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
