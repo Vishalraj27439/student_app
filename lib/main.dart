@@ -2,15 +2,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:student_app/splash_screen.dart';
 import 'package:student_app/dashboard/dashboard_screen.dart';
+import 'package:student_app/splash_screen.dart';
 import 'package:student_app/teacher/teacher_dashboard_screen.dart';
 
-/// ✅ Background message handler
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print("📩 [Background] ${message.notification?.title}");
+  
 }
 
 Future<void> main() async {
@@ -30,10 +31,10 @@ Future<void> main() async {
     } else if (userType == 'Student') {
       initialScreen = DashboardScreen();
     } else {
-      initialScreen = SplashScreen(); 
+      initialScreen = SplashScreen();
     }
   } else {
-    initialScreen = SplashScreen(); 
+    initialScreen = SplashScreen();
   }
 
   runApp(MyApp(initialScreen: initialScreen));
@@ -45,9 +46,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: initialScreen,
-    );
+    return MaterialApp(debugShowCheckedModeBanner: false, home: initialScreen);
   }
 }

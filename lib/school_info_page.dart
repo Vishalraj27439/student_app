@@ -1,7 +1,8 @@
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SchoolInfoPage extends StatefulWidget {
@@ -12,8 +13,10 @@ class SchoolInfoPage extends StatefulWidget {
 class _SchoolInfoPageState extends State<SchoolInfoPage> {
   String schoolName = "My School";
   String schoolLogo = "";
+  String qrCode = "";
   Map<String, String> schoolDetails = {};
-  bool isloading = true;
+  bool isLoading = true;
+  bool isDownloading = false;
 
   @override
   void initState() {
@@ -35,6 +38,8 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
 
       setState(() {
         schoolLogo = data['SchoolLogo'] ?? '';
+        qrCode = data['QRCode'] ?? '';
+        schoolName = data['SchoolName'] ?? 'My School';
         schoolDetails = {
           "Email": data['SchEmail'] ?? '',
           "Website": data['Website'] ?? '',
@@ -42,10 +47,47 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
           "Principal": data["PrincipalName"] ?? '',
           "Contact": data["ContactNo"].toString(),
         };
-        isloading = false;
+        isLoading = false;
       });
     } else {
       print("❌ School info fetch failed: ${response.statusCode}");
+      setState(() => isLoading = false);
+    }
+  }
+
+  /// ✅ Downloads the QR Code safely without needing storage permissions
+  Future<void> downloadQrCode() async {
+    if (qrCode.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("QR code not available")));
+      return;
+    }
+
+    try {
+      setState(() => isDownloading = true);
+      final response = await http.get(Uri.parse(qrCode));
+      if (response.statusCode == 200) {
+        final bytes = response.bodyBytes;
+        final directory = await getApplicationDocumentsDirectory();
+        final filePath =
+            '${directory.path}/School_QR_${DateTime.now().millisecondsSinceEpoch}.png';
+        print("📁 Saved Path: $filePath");
+        final file = File(filePath);
+        await file.writeAsBytes(bytes);
+
+        setState(() => isDownloading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("✅ QR Code saved to Documents folder")),
+        );
+      } else {
+        throw Exception("Download failed");
+      }
+    } catch (e) {
+      setState(() => isDownloading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("❌ Failed to download QR Code")));
     }
   }
 
@@ -54,15 +96,14 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          " School Information",
+          "School Information",
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.deepPurple,
-        leading: BackButton(),
-        iconTheme: IconThemeData(color: Colors.white),
+        leading: BackButton(color: Colors.white),
       ),
       backgroundColor: Colors.deepPurple[50],
-      body: isloading
+      body: isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               child: Card(
@@ -75,7 +116,7 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      // Logo & Name
+                      // 🏫 Logo & Name
                       Column(
                         children: [
                           schoolLogo.isNotEmpty
@@ -97,6 +138,7 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
                       ),
                       SizedBox(height: 20),
 
+                      // 🟦 Section Title
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.symmetric(vertical: 8),
@@ -119,6 +161,7 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
                       ),
                       SizedBox(height: 16),
 
+                      // 📝 School Info List
                       ...schoolDetails.entries.map(
                         (entry) => Padding(
                           padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -137,6 +180,56 @@ class _SchoolInfoPageState extends State<SchoolInfoPage> {
                           ),
                         ),
                       ),
+
+                      // 🧾 QR Code Section
+                      if (qrCode.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        Divider(),
+                        Text(
+                          "Payment QR Code",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.deepPurple,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Image.network(qrCode, height: 150, width: 150),
+                        const SizedBox(height: 12),
+
+                        // ⬇️ Download Button
+                        ElevatedButton.icon(
+                          onPressed: isDownloading ? null : downloadQrCode,
+                          icon: isDownloading
+                              ? SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Icon(Icons.download, color: Colors.white),
+
+                          label: Text(
+                            isDownloading
+                                ? "Downloading..."
+                                : "Download QR Code",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            textStyle: TextStyle(color: Colors.white),
+                            backgroundColor: Colors.deepPurple,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

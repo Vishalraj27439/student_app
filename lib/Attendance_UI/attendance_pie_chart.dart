@@ -24,7 +24,6 @@ class AttendancePieChart extends StatelessWidget {
     // Base size that looks good on regular screens
     double baseChartRadius = 140;
 
-    // Adjust for very small or very large screens
     double chartRadius = screenWidth < 360
         ? baseChartRadius * 0.85
         : screenWidth > 600

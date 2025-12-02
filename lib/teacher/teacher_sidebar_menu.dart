@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:student_app/Exam/exam_schedule.dart';
 import 'package:student_app/alert/stu_alert.dart';
+import 'package:student_app/connect_teacher/teacher_chat_list.dart';
 import 'package:student_app/login_page.dart';
 import 'package:student_app/payment/payment_teacher_screen.dart';
 import 'package:student_app/school_info_page.dart';
@@ -11,13 +12,13 @@ import 'package:student_app/syllabus/syllabus.dart';
 import 'package:student_app/teacher/AssignMarksPage.dart';
 import 'package:student_app/teacher/AssignSkillsPage.dart';
 import 'package:student_app/teacher/ResultcardPage.dart';
-import 'package:student_app/teacher/Attendance_UI/mark_attendance_page.dart';
+import 'package:student_app/Attendance_UI/mark_attendance_page.dart';
 import 'package:student_app/teacher/complaint_teacher/teacher_complaint_list_page.dart';
-import 'package:student_app/teacher/Attendance_UI/teacher_attendance_screen.dart';
+import 'package:student_app/Attendance_UI/teacher_attendance_screen.dart';
 import 'package:student_app/teacher/teacher_dashboard_screen.dart';
 import 'package:student_app/teacher/teacher_homework_page.dart';
 import 'package:student_app/teacher/teacher_profile_page.dart';
-import 'package:student_app/teacher/Attendance_UI/attendance_screen.dart';
+import 'package:student_app/Attendance_UI/attendance_screen.dart';
 import 'package:student_app/teacher/teacher_timetable.dart';
 
 class TeacherSidebarMenu extends StatefulWidget {
@@ -221,6 +222,12 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => SchoolInfoPage()),
+            );
+          }),
+          sidebarItem(context, Icons.message, 'Chat With Students', () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const TeacherChatStudentListPage()),
             );
           }),
           Divider(),

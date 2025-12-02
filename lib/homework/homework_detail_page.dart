@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
-
 class HomeworkDetailPage extends StatelessWidget {
   final Map<String, dynamic> homework;
 

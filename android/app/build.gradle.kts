@@ -8,17 +8,18 @@ plugins {
     id("com.google.gms.google-services") version "4.4.0"
 }
 
+
 android {
     namespace = "com.techinnovationapp.edusathi"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.techinnovationapp.edusathi"
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.2.1"
+        versionCode = 7
+        versionName = "2.0.0"
     }
 
     compileOptions {

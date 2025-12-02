@@ -14,8 +14,48 @@ class StudentAttendanceScreen extends StatefulWidget {
 
 class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   DateTime _focusedMonth = DateTime.now();
-  Map<String, String> _attendanceMap = {}; 
+  Map<String, String> _attendanceMap = {};
   bool _isLoading = false;
+
+  Map<String, int> _calculateTotals() {
+    int present = 0;
+    int absent = 0;
+    int leave = 0;
+    int holiday = 0;
+    int halfDay = 0;
+    int notMarked = 0;
+
+    _attendanceMap.forEach((date, status) {
+      switch (status) {
+        case 'Present':
+          present++;
+          break;
+        case 'Absent':
+          absent++;
+          break;
+        case 'Leave':
+          leave++;
+          break;
+        case 'Holiday':
+          holiday++;
+          break;
+        case 'HalfDay':
+          halfDay++;
+          break;
+        default:
+          notMarked++;
+      }
+    });
+
+    return {
+      'Present': present,
+      'Absent': absent,
+      'Leave': leave,
+      'Holiday': holiday,
+      'HalfDay': halfDay,
+      'Not Marked': notMarked,
+    };
+  }
 
   @override
   void initState() {
@@ -45,7 +85,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       });
     } else {
       setState(() => _isLoading = false);
-      print('❌ Failed to load teacher attendance');
+      print('❌ Failed to load student attendance');
     }
   }
 
@@ -56,6 +96,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     final firstOfMonth = DateTime(year, month, 1);
     final daysInMonth = DateTime(year, month + 1, 0).day;
     final startWeekday = firstOfMonth.weekday % 7;
+    final totals = _calculateTotals();
 
     return Scaffold(
       appBar: AppBar(
@@ -73,6 +114,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               const SizedBox(height: 12),
               _buildCalendarContainer(year, month, daysInMonth, startWeekday),
               const SizedBox(height: 10),
+              _buildSummaryBox(totals), // ✅ Updated Summary Box
             ],
           ),
           if (_isLoading)
@@ -106,7 +148,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       ),
       child: Column(
         children: [
-          // Month Selector
+          // 🔹 Month Selector
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: const BoxDecoration(
@@ -154,7 +196,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
             ),
           ),
 
-          // Weekdays
+          // 🔹 Weekdays Header
           Padding(
             padding: const EdgeInsets.all(10),
             child: Row(
@@ -176,7 +218,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
             ),
           ),
 
-          // Calendar Grid
+          // 🔹 Calendar Grid
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: GridView.builder(
@@ -194,7 +236,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                 final day = index - startWeekday + 1;
                 final date = DateTime(year, month, day);
                 final dateStr = DateFormat('yyyy-MM-dd').format(date);
-                final status = _attendanceMap[dateStr] ?? 'not_marked';
+                final status = _attendanceMap[dateStr] ?? 'Not Marked';
 
                 Color dotColor;
                 switch (status) {
@@ -206,6 +248,12 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                     break;
                   case 'Leave':
                     dotColor = Colors.orange;
+                    break;
+                  case 'Holiday':
+                    dotColor = Colors.black;
+                    break;
+                  case 'HalfDay':
+                    dotColor = Colors.blue;
                     break;
                   default:
                     dotColor = Colors.grey;
@@ -244,6 +292,72 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
           const SizedBox(height: 12),
         ],
       ),
+    );
+  }
+
+  // ✅ Summary Box (Analysis)
+  Widget _buildSummaryBox(Map<String, int> totals) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Attendance Summary',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepPurple,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildStatusItem('Present', totals['Present']!, Colors.green),
+              _buildStatusItem('Absent', totals['Absent']!, Colors.red),
+              _buildStatusItem('Leave', totals['Leave']!, Colors.orange),
+              _buildStatusItem('Holiday', totals['Holiday']!, Colors.black),
+              _buildStatusItem('Half Day', totals['HalfDay']!, Colors.blue),
+              _buildStatusItem(
+                'Not Marked',
+                totals['Not Marked']!,
+                Colors.grey,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusItem(String label, int count, Color color) {
+    return Column(
+      children: [
+        CircleAvatar(radius: 6, backgroundColor: color),
+        const SizedBox(height: 4),
+        Text(
+          '$count',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+        ),
+      ],
     );
   }
 }

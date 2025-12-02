@@ -1,14 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:student_app/Attendance_UI/stu_attendance_page.dart';
 import 'package:student_app/Exam/exam_schedule.dart';
-import 'package:student_app/dashboard/attendance_pie_chart.dart';
+import 'package:student_app/Exam/stu_result.dart';
+import 'package:student_app/Attendance_UI/attendance_pie_chart.dart';
+import 'package:student_app/Notification/notification_list.dart';
+import 'package:student_app/connect_teacher/connect_with_us.dart';
+// import 'package:student_app/connect_teacher/student_chat.dart';
+import 'package:student_app/dashboard/calendar.dart';
 import 'package:student_app/homework/homework_model.dart';
 import 'package:student_app/homework/homework_page.dart';
 import 'package:student_app/dashboard/timetable_page.dart';
@@ -20,12 +25,12 @@ import 'package:student_app/school_info_page.dart';
 import 'package:student_app/complaint/view_complaints_page.dart';
 import 'package:student_app/subjects_page.dart';
 import 'package:student_app/syllabus/syllabus.dart';
-import 'package:student_app/teacher/Attendance_UI/stu_attendance_report.dart';
+import 'package:student_app/Attendance_UI/attendnce_box.dart';
+import 'package:student_app/Attendance_UI/stu_attendance_report.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
-
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -43,10 +48,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int payments = 0;
   String lastPaymentDate = '';
   int subjects = 0;
+  String status = '';
   Map<String, dynamic> attendance = {};
   List<Map<String, dynamic>> homeworks = [];
   List<dynamic> notices = [];
   List<dynamic> events = [];
+  List<dynamic> siblings = [];
+
   @override
   void initState() {
     super.initState();
@@ -55,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> initData() async {
     await loadProfileData();
-    await fetchDashboardData();
+    await fetchDashboardData(context);
     setState(() {
       isLoading = false;
     });
@@ -70,7 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     studentsection = prefs.getString('section') ?? '';
   }
 
-  Future<void> fetchDashboardData() async {
+  Future<void> fetchDashboardData(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
@@ -78,12 +86,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       Uri.parse('https://school.edusathi.in/api/student/dashboard'),
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
-
+    print("🔵 API Status: ${response.statusCode}");
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
 
       dues = data['dues'] ?? 0;
       payments = int.tryParse(data['payments'].toString()) ?? 0;
+
       final rawDate = data['payment_date'] ?? '';
       if (rawDate.isNotEmpty) {
         try {
@@ -97,7 +106,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         lastPaymentDate = '';
       }
 
+      status = data['today_status'] ?? '';
       subjects = data['subjects'] ?? 0;
+
       attendance = {
         'present': data['attendances']?['present'] ?? 0,
         'absent': data['attendances']?['absent'] ?? 0,
@@ -105,18 +116,261 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'half_day': data['attendances']?['half_day'] ?? 0,
         'working_days': data['attendances']?['working_days'] ?? 0,
       };
+
       homeworks = List<Map<String, dynamic>>.from(data['homeworks'] ?? []);
       notices = data['notices'] ?? [];
       events = data['events'] ?? [];
-    } else {
-      print('❌ Dashboard fetch failed: ${response.statusCode}');
+      siblings = data['siblings'] ?? [];
+
+      return;
     }
-    prefs.getKeys().forEach((key) {
-      print('$key = ${prefs.get(key)}');
-      FirebaseMessaging.instance.getToken().then((fcmToken) {
-        print("🟢 FCM Device Token: $fcmToken");
-      });
-    });
+    if (response.statusCode == 401) {
+      await prefs.clear();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => LoginPage()),
+        (route) => false,
+      );
+
+      return;
+    }
+    print('❌ Dashboard fetch failed: ${response.statusCode}');
+  }
+
+  void _showSiblingPopup(BuildContext context) {
+    if (siblings.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Siblings'),
+          content: const Text('No siblings available for this student.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.people, color: Colors.blue),
+            SizedBox(width: 8),
+            Text(
+              'Switch Sibling',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: siblings.length,
+            itemBuilder: (context, index) {
+              final sibling = siblings[index];
+              final photoUrl =
+                  sibling['Photo'] != null &&
+                      sibling['Photo'].toString().isNotEmpty
+                  ? sibling['Photo'].toString()
+                  : 'https://school.edusathi.in/uploads/no_image.png';
+
+              final name = sibling['Name'] ?? 'Unknown';
+              final className = sibling['Class'].toString();
+
+              final studentId = sibling['id'].toString();
+
+              print('🧠 Sibling Data: $sibling');
+
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: NetworkImage(photoUrl),
+                  ),
+                  title: Text(
+                    name,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text('Class: $className'),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                  ),
+                  onTap: () {
+                    // 🔹 Show confirmation dialog before switching
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext confirmContext) {
+                        return AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          title: const Text(
+                            'Confirm Switch',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          content: Text(
+                            'Are you sure you want to switch to $name?',
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(confirmContext),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                Navigator.pop(
+                                  confirmContext,
+                                ); // close confirm dialog
+                                Navigator.pop(
+                                  context,
+                                ); // close sibling list dialog safely
+                                if (!mounted) return;
+                                await _shiftLogin(studentId);
+                              },
+                              icon: const Icon(Icons.check_circle, size: 18),
+                              label: const Text('Yes, Switch'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _shiftLogin(String studentId) async {
+    if (!mounted) return;
+    try {
+      // Step 1: Get SharedPreferences instance
+      final prefs = await SharedPreferences.getInstance();
+
+      // Step 2: Get saved token before making request
+      final token = prefs.getString('token') ?? '';
+      print('🔑 Using Token: $token');
+
+      // Step 3: Prepare API request
+      final url = Uri.parse(
+        'https://school.edusathi.in/api/student/shift_login',
+      );
+      final headers = {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      final body = {'id': studentId};
+      print('📤 Request Body: $body');
+
+      // Step 4: Send request
+      final response = await http.post(url, headers: headers, body: body);
+
+      print('📥 Response Status: ${response.statusCode}');
+      print('📥 Response Body: ${response.body}');
+
+      // Step 5: Handle non-200 responses
+      if (response.statusCode != 200) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Server error (${response.statusCode})')),
+        );
+        return;
+      }
+
+      // Step 6: Decode JSON
+      dynamic data;
+      try {
+        data = json.decode(response.body);
+      } catch (e) {
+        print('❌ Failed to decode response as JSON');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid server response')),
+        );
+        return;
+      }
+
+      // Step 7: Handle response data
+      if (data['status'] == true) {
+        print('✅ Shift Login Successful for ID: $studentId');
+
+        // Step 8: Store new login info & token
+        await prefs.setString('token', data['token'] ?? '');
+        await prefs.setString('user_type', data['user_type'] ?? '');
+        await prefs.setString(
+          'student_name',
+          data['profile']['student_name'] ?? '',
+        );
+        await prefs.setString(
+          'class_name',
+          data['profile']['class_name'] ?? '',
+        );
+        await prefs.setString('section', data['profile']['section'] ?? '');
+        await prefs.setString(
+          'school_name',
+          data['profile']['school_name'] ?? '',
+        );
+        await prefs.setString(
+          'student_photo',
+          data['profile']['student_photo'] ?? '',
+        );
+
+        print('💾 New Token Saved: ${data['token']}');
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Switched student successfully')),
+        );
+
+        // Navigate fresh to dashboard/home
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => DashboardScreen()),
+        );
+      } else {
+        print('❌ Shift login failed: ${data['message']}');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Login failed')),
+        );
+      }
+    } catch (e) {
+      print('🚨 Exception in _shiftLogin: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Something went wrong')));
+    }
   }
 
   @override
@@ -132,14 +386,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Colors.white),
+        titleSpacing: 0,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '$schoolName',
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+            Expanded(
+              child: Text(
+                '$schoolName',
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            CircleAvatar(backgroundImage: NetworkImage(studentPhoto)),
+            GestureDetector(
+              child: Icon(Icons.calendar_month_rounded),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => StudentCalendarPage()),
+              ),
+            ),
+            SizedBox(width: 5),
+            GestureDetector(
+              child: Icon(Icons.notifications),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => NotificationListPage()),
+              ),
+            ),
+            SizedBox(width: 5),
+            GestureDetector(
+              onTap: () => _showSiblingPopup(context),
+              child: CircleAvatar(
+                backgroundImage: studentPhoto.isNotEmpty
+                    ? NetworkImage(studentPhoto)
+                    : const AssetImage('assets/images/default_avatar.png')
+                          as ImageProvider,
+                radius: 15,
+              ),
+            ),
+            const SizedBox(width: 5),
           ],
         ),
         backgroundColor: Colors.deepPurple,
@@ -197,6 +481,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                   const SizedBox(height: 30),
+                  GestureDetector(
+                    child: AttendanceCard(
+                      title: "Today's Attendance",
+                      place: "School",
+                      status: status,
+                      icon: Icons.school,
+                    ),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AttendanceAnalyticsPage(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   Container(
                     height: 225,
                     padding: const EdgeInsets.all(8),
@@ -318,26 +617,32 @@ class InfoCard extends StatelessWidget {
       );
     }
   }
-Future<void> _downloadFile(BuildContext context, String url) async {
+
+  Future<void> _downloadFile(BuildContext context, String url) async {
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
-        throw Exception("Failed to download file. Status: ${response.statusCode}");
+        throw Exception(
+          "Failed to download file. Status: ${response.statusCode}",
+        );
       }
       final dir = await getApplicationDocumentsDirectory();
-      final fileName = url.split('/').last; 
+      final fileName = url.split('/').last;
       final file = File('${dir.path}/$fileName');
       await file.writeAsBytes(response.bodyBytes, flush: true);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Downloaded and saved to: ${dir.path}/$fileName")),
+        SnackBar(
+          content: Text("Downloaded and saved to: ${dir.path}/$fileName"),
+        ),
       );
       await OpenFile.open(file.path);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Download error: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Download error: $e")));
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final titleKey = isEvent ? "EventTitle" : "NoticeTitle";
@@ -350,6 +655,7 @@ Future<void> _downloadFile(BuildContext context, String url) async {
         return inputDate;
       }
     }
+
     final Color primaryColor = isEvent
         ? Colors.orange.shade700
         : Colors.indigo.shade700;
@@ -377,7 +683,6 @@ Future<void> _downloadFile(BuildContext context, String url) async {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -413,9 +718,8 @@ Future<void> _downloadFile(BuildContext context, String url) async {
             if (hasAttachment) ...[
               const SizedBox(height: 12),
               Row(
-                mainAxisSize: MainAxisSize.min, 
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                
                   OutlinedButton.icon(
                     icon: const Icon(Icons.visibility, size: 18),
                     label: const Text("View Attachment"),
@@ -426,21 +730,16 @@ Future<void> _downloadFile(BuildContext context, String url) async {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-           
+
                     onPressed: () => _launchUrl(context, fullAttachmentUrl),
                   ),
 
-                  const SizedBox(width: 25), 
-                
+                  const SizedBox(width: 25),
+
                   IconButton(
                     onPressed: () => _downloadFile(context, fullAttachmentUrl),
-                    icon: Icon(
-                      Icons.download,
-                      color: primaryColor,
-                      size: 24, 
-                    ),
-                    tooltip:
-                        'Download Attachment', 
+                    icon: Icon(Icons.download, color: primaryColor, size: 24),
+                    tooltip: 'Download Attachment',
                   ),
                 ],
               ),
@@ -641,6 +940,16 @@ class LeftSidebarMenu extends StatelessWidget {
                 );
               },
             ),
+            sidebarTile(
+              icon: Icons.calendar_month,
+              title: 'Calendar',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => StudentCalendarPage()),
+                );
+              },
+            ),
 
             sidebarTile(
               icon: Icons.subject,
@@ -703,6 +1012,16 @@ class LeftSidebarMenu extends StatelessWidget {
               },
             ),
             sidebarTile(
+              icon: Icons.list_alt_outlined,
+              title: 'Result',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => StudentResultPage()),
+                );
+              },
+            ),
+            sidebarTile(
               icon: Icons.school,
               title: 'School Info',
               onTap: () {
@@ -713,7 +1032,22 @@ class LeftSidebarMenu extends StatelessWidget {
               },
             ),
 
-     
+            sidebarTile(
+              icon: Icons.support_agent,
+              title: 'Contact & Support',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ConnectWithUsPage(
+                      teacherId: 0,
+                      teacherName: '',
+                      teacherPhoto: '',
+                    ),
+                  ),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Logout', style: TextStyle(color: Colors.red)),

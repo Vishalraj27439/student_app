@@ -11,16 +11,16 @@ class StudentAlertPage extends StatefulWidget {
 }
 
 class _StudentAlertPageState extends State<StudentAlertPage> {
-  DateTime? selectedDate;
   TextEditingController searchController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
-  TextEditingController dateController = TextEditingController();
 
   List<dynamic> students = [];
   List<dynamic> filteredStudents = [];
-  Set<String> selectedTokens = {};
-  bool selectAll = false;
+  Set<String> selectedStudentIds = {};
+
   bool isLoading = false;
+  bool isSending = false; // 🔥 NEW → Loader for Send Button
+  bool selectAll = false;
   String? token;
 
   @override
@@ -36,19 +36,14 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
   }
 
   Future<void> fetchStudents() async {
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("⚠️ Token not found. Please login again."),
-        ),
-      );
-      return;
-    }
+    if (token == null) return;
 
     setState(() => isLoading = true);
+
     final url = Uri.parse(
       "https://school.edusathi.in/api/teacher/student/list",
     );
+
     try {
       final res = await http.post(
         url,
@@ -61,20 +56,16 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
 
       if (res.statusCode == 200) {
         final data = json.decode(res.body);
-        debugPrint("📥 Raw Response: $data");
-        debugPrint("📌 Total Students from API: ${data.length}");
+
         setState(() {
           students = data;
           filteredStudents = data;
         });
-      } else {
-        debugPrint("❌ Fetch failed: ${res.statusCode} - ${res.body}");
-
-        debugPrint("📌 Total Students: ${students.length}");
       }
     } catch (e) {
-      debugPrint("❌ Error fetching students: $e");
+      debugPrint("Error fetching students = $e");
     }
+
     setState(() => isLoading = false);
   }
 
@@ -90,10 +81,12 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
     });
   }
 
+  // ====================================================
+  // 🔴 SEND ALERT (Loader Added)
+  // ====================================================
   Future<void> sendAlert() async {
     final message = descriptionController.text.trim();
-
-    if (message.isEmpty || selectedTokens.isEmpty) {
+    if (message.isEmpty || selectedStudentIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("⚠️ Please enter message and select students"),
@@ -102,73 +95,64 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
       return;
     }
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Confirm Send"),
-        content: Text(
-          "Are you sure you want to send this alert to ${selectedTokens.length} students?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text("Yes, Send"),
-          ),
-        ],
-      ),
-    );
+    // Start Loader
+    setState(() => isSending = true);
 
-    if (confirm != true) return;
+    // Collect tokens
+    List<String> tokens = [];
+    for (var student in students) {
+      if (selectedStudentIds.contains(student["id"].toString())) {
+        if (student["fcm_token"] != null && student["fcm_token"] != "") {
+          tokens.add(student["fcm_token"]);
+        }
+      }
+    }
 
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("⚠️ Token not found. Please login again."),
-        ),
-      );
+    if (tokens.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("⚠️ No FCM token found")));
+      setState(() => isSending = false);
       return;
     }
+
+    final body = {"message": message, "tokens": tokens};
 
     final url = Uri.parse(
       "https://school.edusathi.in/api/teacher/student/alert",
     );
-    final body = {"message": message, "tokens": selectedTokens.toList()};
 
     try {
       final res = await http.post(
         url,
-        body: json.encode(body),
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer $token",
         },
+        body: json.encode(body),
       );
 
       if (res.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("✅ Alert sent successfully!")),
+          const SnackBar(content: Text("✅ Alert Sent Successfully")),
         );
+
         descriptionController.clear();
         setState(() {
-          selectedTokens.clear();
           selectAll = false;
+          selectedStudentIds.clear();
         });
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text("❌ Failed: ${res.body}")));
+        ).showSnackBar(SnackBar(content: Text("❌ Failed : ${res.body}")));
       }
     } catch (e) {
-      debugPrint("❌ Error sending alert: $e");
+      debugPrint("Error sending alert = $e");
     }
+
+    // Stop Loader
+    setState(() => isSending = false);
   }
 
   @override
@@ -179,18 +163,19 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
       ),
+
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Description Box
+                // MESSAGE BOX
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
                     controller: descriptionController,
                     maxLines: 3,
                     decoration: InputDecoration(
-                      hintText: "Write alert/description",
+                      hintText: "Write alert message...",
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -198,18 +183,15 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
                   ),
                 ),
 
-                // Search Bar
+                // SEARCH BOX
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
                     controller: searchController,
                     onChanged: filterStudents,
                     decoration: InputDecoration(
-                      hintText: "Search Student by Name",
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Colors.deepPurple,
-                      ),
+                      hintText: "Search Student...",
+                      prefixIcon: const Icon(Icons.search),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -217,70 +199,57 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
                   ),
                 ),
 
-                // Select All Checkbox
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Row(
-                    children: [
-                      Checkbox(
-                        value: selectAll,
-                        activeColor: Colors.deepPurple,
-                        onChanged: (val) {
-                          setState(() {
-                            selectAll = val ?? false;
-                            if (selectAll) {
-                              selectedTokens = filteredStudents
-                                  .map<String>((s) => s["fcm_token"].toString())
-                                  .toSet();
-                            } else {
-                              selectedTokens.clear();
-                            }
-                          });
-                        },
-                      ),
-                      const Text("Select All Students"),
-                    ],
-                  ),
+                // SELECT ALL
+                Row(
+                  children: [
+                    Checkbox(
+                      value: selectAll,
+                      onChanged: (val) {
+                        setState(() {
+                          selectAll = val ?? false;
+                          if (selectAll) {
+                            selectedStudentIds = filteredStudents
+                                .map((s) => s["id"].toString())
+                                .toSet();
+                          } else {
+                            selectedStudentIds.clear();
+                          }
+                        });
+                      },
+                    ),
+                    const Text("Select All Students"),
+                  ],
                 ),
 
-                // Student List
+                // STUDENT LIST
                 Expanded(
                   child: ListView.builder(
                     itemCount: filteredStudents.length,
                     itemBuilder: (context, index) {
                       final student = filteredStudents[index];
-                      final token = student["fcm_token"].toString();
-                      final isSelected = selectedTokens.contains(token);
+                      final id = student["id"].toString();
+                      final isChecked = selectedStudentIds.contains(id);
 
                       return Card(
-                        color: isSelected
-                            ? Colors.deepPurple[50]
-                            : Colors.white,
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
                         child: ListTile(
                           leading: Checkbox(
-                            value: isSelected,
-                            activeColor: Colors.deepPurple,
+                            value: isChecked,
                             onChanged: (val) {
                               setState(() {
                                 if (val == true) {
-                                  selectedTokens.add(token);
+                                  selectedStudentIds.add(id);
                                 } else {
-                                  selectedTokens.remove(token);
+                                  selectedStudentIds.remove(id);
                                 }
                                 selectAll =
-                                    selectedTokens.length ==
+                                    selectedStudentIds.length ==
                                     filteredStudents.length;
                               });
                             },
                           ),
                           title: Text(student["StudentName"]),
                           subtitle: Text(
-                            "Father: ${student["FatherName"]}\n"
-                            "Roll: ${student["RollNo"]} | DOB: ${student["DOB"]}",
+                            "Father: ${student["FatherName"]}\nRoll: ${student["RollNo"]}",
                           ),
                         ),
                       );
@@ -288,19 +257,31 @@ class _StudentAlertPageState extends State<StudentAlertPage> {
                   ),
                 ),
 
-                // Send Alert Button
+                // SEND BUTTON (with loader)
                 Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
+                    child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepPurple,
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.all(14),
                       ),
-                      onPressed: sendAlert,
-                      icon: const Icon(Icons.send),
-                      label: const Text("Send Alert"),
+                      onPressed: isSending ? null : sendAlert,
+                      child: isSending
+                          ? const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              "Send Alert",
+                              style: TextStyle(fontSize: 16),
+                            ),
                     ),
                   ),
                 ),

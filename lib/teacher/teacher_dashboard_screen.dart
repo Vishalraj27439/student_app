@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:student_app/login_page.dart';
 import 'package:student_app/payment/payment_teacher_screen.dart';
 import 'package:student_app/teacher/complaint_teacher/teacher_complaint_list_page.dart';
+import 'package:student_app/teacher/student_list.dart';
 import 'package:student_app/teacher/teacher_recent_homework.dart';
 import 'package:student_app/teacher/teacher_sidebar_menu.dart';
 
@@ -28,15 +30,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   List<Map<String, dynamic>> homeworks = [];
 
   @override
- @override
-void initState() {
-  super.initState();
-  loadTeacherInfo();
-  fetchDashboardData().then((_) {
-    fetchTeacherHomeworks(); // Add this
-  });
-}
-
+  @override
+  void initState() {
+    super.initState();
+    loadTeacherInfo();
+    fetchDashboardData().then((_) {
+      fetchTeacherHomeworks(); // Add this
+    });
+  }
 
   Future<void> loadTeacherInfo() async {
     final prefs = await SharedPreferences.getInstance();
@@ -46,38 +47,33 @@ void initState() {
     });
   }
 
-Future<void> fetchTeacherHomeworks() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token') ?? '';
+  Future<void> fetchTeacherHomeworks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
 
-  final response = await http.post(
-    Uri.parse('https://school.edusathi.in/api/teacher/homework'),
-    headers: {
-      'Authorization': 'Bearer $token',
-      'Accept': 'application/json',
-    },
-  );
-print("🪪 Token being used: $token");
+    final response = await http.post(
+      Uri.parse('https://school.edusathi.in/api/teacher/homework'),
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+    print("🪪 Token being used: $token");
 
-  if (response.statusCode == 200) {
-    final List<dynamic> data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
 
-    // 🔍 Add these for debugging:
-    print("📥 API raw response: ${response.body}");
-    print("✅ Parsed data: $data");
+      // 🔍 Add these for debugging:
+      print("📥 API raw response: ${response.body}");
+      print("✅ Parsed data: $data");
 
-    setState(() {
-      homeworks = List<Map<String, dynamic>>.from(data);
+      setState(() {
+        homeworks = List<Map<String, dynamic>>.from(data);
 
-      // 🔍 Log what's being saved
-      print("📝 Homework list set in state: $homeworks");
-    });
-  } else {
-    print('❌ Teacher Homework API failed: ${response.statusCode}');
+        // 🔍 Log what's being saved
+        print("📝 Homework list set in state: $homeworks");
+      });
+    } else {
+      print('❌ Teacher Homework API failed: ${response.statusCode}');
+    }
   }
-}
-
-
 
   Future<void> fetchDashboardData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -111,6 +107,17 @@ print("🪪 Token being used: $token");
       });
     } else {
       setState(() => isLoading = false);
+       if (response.statusCode == 401) {
+    
+      await prefs.clear();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => LoginPage()),
+        (route) => false,
+      );
+
+      return;
+    }
       print('Dashboard API error: ${response.statusCode}');
     }
   }
@@ -122,6 +129,7 @@ print("🪪 Token being used: $token");
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Colors.deepPurple,
+        titleSpacing: 0,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -136,16 +144,16 @@ print("🪪 Token being used: $token");
             teacherPhoto.isNotEmpty
                 ? CircleAvatar(
                     backgroundImage: NetworkImage(teacherPhoto),
-                    radius: 18,
+                    radius: 15,
                   )
                 : const CircleAvatar(
                     backgroundImage: AssetImage('assets/images/logo_new.png'),
-                    radius: 18,
+                    radius: 15,
                   ),
+            const SizedBox(width: 15),
           ],
         ),
       ),
-
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -164,6 +172,10 @@ print("🪪 Token being used: $token");
                           backgroundColor: const Color(0xFFE3F2FD),
                           textColor: Colors.blue,
                         ),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => StudentListPage()),
+                        ),
                       ),
                       GestureDetector(
                         child: DashboardCard(
@@ -172,7 +184,13 @@ print("🪪 Token being used: $token");
                           borderColor: Colors.green,
                           backgroundColor: const Color(0xFFE8F5E9),
                           textColor: Colors.green,
-                        ),onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_)=>PaymentTeacherScreen())),
+                        ),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PaymentTeacherScreen(),
+                          ),
+                        ),
                       ),
                       GestureDetector(
                         child: DashboardCard(
@@ -181,7 +199,13 @@ print("🪪 Token being used: $token");
                           borderColor: Colors.red,
                           backgroundColor: const Color(0xFFFFEBEE),
                           textColor: Colors.red,
-                        ),onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_)=>TeacherComplaintListPage()))
+                        ),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TeacherComplaintListPage(),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -206,49 +230,9 @@ print("🪪 Token being used: $token");
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // buildRecentHomeworks(context, homeworks),
                   TeacherRecentHomeworks(homeworks: homeworks),
 
                   const SizedBox(height: 20),
-                  // Container(
-                  //   padding: const EdgeInsets.all(12),
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.white,
-                  //     borderRadius: BorderRadius.circular(12),
-                  //     boxShadow: [
-                  //       BoxShadow(blurRadius: 6, color: Colors.grey.shade200),
-                  //     ],
-                  //   ),
-                  // child: Column(
-                  //   crossAxisAlignment: CrossAxisAlignment.start,
-                  //   children: const [
-                  //     Text(
-                  //       "🗓️ Today's Schedule",
-                  //       style: TextStyle(
-                  //         fontSize: 16,
-                  //         fontWeight: FontWeight.bold,
-                  //         color: Colors.deepPurple,
-                  //       ),
-                  //     ),
-                  //     SizedBox(height: 10),
-                  //     ListTile(
-                  //       leading: Icon(Icons.class_),
-                  //       title: Text("Maths - Class 8A"),
-                  //       subtitle: Text("9:00 AM - 9:45 AM"),
-                  //     ),
-                  //     ListTile(
-                  //       leading: Icon(Icons.class_),
-                  //       title: Text("Science - Class 7B"),
-                  //       subtitle: Text("10:00 AM - 10:45 AM"),
-                  //     ),
-                  //     ListTile(
-                  //       leading: Icon(Icons.class_),
-                  //       title: Text("English - Class 9C"),
-                  //       subtitle: Text("11:00 AM - 11:45 AM"),
-                  //     ),
-                  //   ],
-                  // ),
-                  // ),
                 ],
               ),
             ),
