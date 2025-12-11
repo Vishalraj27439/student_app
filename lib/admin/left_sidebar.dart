@@ -39,7 +39,7 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
   void initState() {
     super.initState();
     loadTeacherInfo();
-    // fetchDashboardData();
+   
   }
 
   Future<void> loadTeacherInfo() async {
@@ -114,12 +114,12 @@ class _TeacherSidebarMenuState extends State<TeacherSidebarMenu> {
               MaterialPageRoute(builder: (_) => const TeacherDashboardScreen()),
             );
           }),
-          sidebarItem(context, Icons.person, 'Admin', () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
-            );
-          }),
+          // sidebarItem(context, Icons.person, 'Admin', () {
+          //   Navigator.push(
+          //     context,
+          //     MaterialPageRoute(builder: (_) => const AdminDashboardPage()),
+          //   );
+          // }),
           sidebarItem(context, Icons.person, 'Profile', () {
             Navigator.push(
               context,

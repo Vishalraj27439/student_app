@@ -11,6 +11,7 @@ class LoginPage extends StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
+
 class _LoginPageState extends State<LoginPage> {
   String baseUrl = "https://school.edusathi.in/api";
   final TextEditingController idController = TextEditingController();
@@ -18,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscureText = true;
   bool _isLoading = false;
   String _errorMessage = '';
-  String selectedRole = 'Student'; 
+  String selectedRole = 'Student';
 
   void _login() async {
     setState(() {
@@ -103,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
     } catch (e) {
-       print("🔴 Login Exception: $e");
+      print("🔴 Login Exception: $e");
       setState(() {
         _errorMessage = 'Something went wrong. Please try again later.';
       });
@@ -126,16 +127,16 @@ class _LoginPageState extends State<LoginPage> {
 
     final response = await http.post(
       Uri.parse('https://school.edusathi.in/api/save_token'),
-      
+
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: jsonEncode({'fcm_token': fcmToken}),
-    );print("🔵 Status Code: ${response.statusCode}");
-print("📦 Response Body: ${response.body}");
-
+    );
+    print("🔵 Status Code: ${response.statusCode}");
+    print("📦 Response Body: ${response.body}");
 
     if (response.statusCode == 200) {
       print('✅ FCM token saved successfully');
@@ -153,7 +154,7 @@ print("📦 Response Body: ${response.body}");
 
   Widget roleToggleSwitch() {
     return Container(
-      width: 250,
+      width: 300,
       height: 50,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
@@ -168,6 +169,33 @@ print("📦 Response Body: ${response.body}");
       ),
       child: Row(
         children: [
+          //Admin tab
+          Expanded(
+            child: InkWell(
+              onTap: () => setState(() => selectedRole = 'Teacher'),
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  gradient: selectedRole == 'Teacher'
+                      ? LinearGradient(
+                          colors: [Colors.purple, Colors.deepPurple],
+                        )
+                      : null,
+                ),
+                child: Text(
+                  "Admin",
+                  style: TextStyle(
+                    color: selectedRole == 'Teacher'
+                        ? Colors.white
+                        : Colors.deepPurple,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
           // Student tab
           Expanded(
             child: InkWell(
